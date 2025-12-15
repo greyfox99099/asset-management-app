@@ -76,9 +76,8 @@ const authLimiter = rateLimit({
     message: 'Too many login attempts, please try again after 15 minutes',
     standardHeaders: true,
     legacyHeaders: false,
-    validate: { xForwardedForHeader: false } // Disable validation for Replit/Proxy
-});
-skipSuccessfulRequests: true, // Don't count successful logins
+    validate: { xForwardedForHeader: false }, // Disable validation for Replit/Proxy
+    skipSuccessfulRequests: true, // Don't count successful logins
 });
 
 const registerLimiter = rateLimit({
