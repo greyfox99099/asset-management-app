@@ -1,0 +1,9 @@
+run = "sh replit_start.sh"
+entrypoint = "backend/server.js"
+modules = ["nodejs-18"]
+
+[nix]
+channel = "stable-23_05"
+
+[env]
+NODE_ENV = "production"
