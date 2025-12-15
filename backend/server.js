@@ -9,6 +9,7 @@ const fs = require('fs');
 const { authMiddleware } = require('./authMiddleware');
 const authRoutes = require('./authRoutes');
 const reportRoutes = require('./reportRoutes');
+const userRoutes = require('./userRoutes');
 require('dotenv').config();
 
 const app = express();
@@ -120,6 +121,9 @@ app.use('/api/auth', authRoutes);
 
 // Report Routes (protected)
 app.use('/api/reports', authMiddleware, reportRoutes);
+
+// User Management Routes (admin only - middleware inside router)
+app.use('/api/users', authMiddleware, userRoutes);
 
 // Public asset view (no authentication required)
 app.get('/api/public/assets/:id', async (req, res) => {

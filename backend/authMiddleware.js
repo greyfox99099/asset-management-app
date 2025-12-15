@@ -20,4 +20,30 @@ const authMiddleware = (req, res, next) => {
     }
 };
 
-module.exports = { authMiddleware, JWT_SECRET };
+const isAdmin = async (req, res, next) => {
+    try {
+        const { role } = req.user; // Role should be in token, or fetched from DB
+
+        // If role is in token:
+        if (role === 'admin') {
+            return next();
+        }
+
+        // Fallback: Fetch from DB if not in token (safer)
+        // const { query } = require('./db');
+        // const result = await query('SELECT role FROM users WHERE id = ?', [req.user.id]);
+        // if (result.rows.length > 0 && result.rows[0].role === 'admin') {
+        //     next();
+        // } else {
+        //     res.status(403).json({ error: 'Access denied: Admin only' });
+        // }
+
+        res.status(403).json({ error: 'Access denied: Admin only' });
+
+    } catch (error) {
+        console.error('Admin check error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+};
+
+module.exports = { authMiddleware, isAdmin, JWT_SECRET };

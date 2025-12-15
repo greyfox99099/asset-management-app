@@ -169,7 +169,7 @@ router.post('/login',
 
             // Generate JWT
             const token = jwt.sign(
-                { id: user.id, username: user.username },
+                { id: user.id, username: user.username, role: user.role || 'staff' },
                 JWT_SECRET,
                 { expiresIn: '7d' }
             );
@@ -179,7 +179,8 @@ router.post('/login',
                 user: {
                     id: user.id,
                     username: user.username,
-                    email: user.email
+                    email: user.email,
+                    role: user.role || 'staff'
                 }
             });
         } catch (error) {
@@ -201,7 +202,7 @@ router.get('/me', async (req, res) => {
         const decoded = jwt.verify(token, JWT_SECRET);
 
         const result = await query(
-            'SELECT id, username, email, created_at FROM users WHERE id = ?',
+            'SELECT id, username, email, role, created_at FROM users WHERE id = ?',
             [decoded.id]
         );
 

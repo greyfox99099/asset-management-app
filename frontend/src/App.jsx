@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { API_BASE_URL } from './config';
-import { Plus, LayoutDashboard, List, Package, LogOut, X, Menu, FileSpreadsheet } from 'lucide-react';
+import { Plus, LayoutDashboard, List, Package, LogOut, X, Menu, FileSpreadsheet, Users } from 'lucide-react';
 import { BrowserRouter, Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Dashboard from './components/Dashboard';
@@ -14,6 +14,7 @@ import EmailVerification from './components/EmailVerification';
 import DevVerificationHelper from './components/DevVerificationHelper';
 import PublicAssetView from './components/PublicAssetView';
 import Reports from './components/Reports';
+import UserManagement from './components/UserManagement';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function Layout() {
@@ -131,6 +132,20 @@ function Layout() {
                         <FileSpreadsheet size={20} />
                         Reports
                     </Link>
+
+                    {/* Admin Only Link */}
+                    {user?.role === 'admin' && (
+                        <Link
+                            to="/users"
+                            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all font-medium ${location.pathname === '/users'
+                                ? 'bg-blue-50 text-blue-600 shadow-sm'
+                                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                                }`}
+                        >
+                            <Users size={20} />
+                            Users
+                        </Link>
+                    )}
                 </nav>
 
                 {/* User info and logout */}
@@ -199,6 +214,7 @@ function Layout() {
                                 <Route path="/" element={<Dashboard assets={assets} />} />
                                 <Route path="/list" element={<AssetList assets={assets} onEdit={handleEditAsset} onDelete={handleDeleteAsset} />} />
                                 <Route path="/reports" element={<Reports />} />
+                                <Route path="/users" element={user?.role === 'admin' ? <UserManagement /> : <Navigate to="/" />} />
                             </Routes>
                         </div>
                     </div>
