@@ -66,6 +66,7 @@ const apiLimiter = rateLimit({
     message: 'Too many requests from this IP, please try again later.',
     standardHeaders: true,
     legacyHeaders: false,
+    validate: { xForwardedForHeader: false } // Disable validation for Replit/Proxy
 });
 
 // 4. Strict Rate Limiting for Auth endpoints
@@ -73,7 +74,11 @@ const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 5, // 5 attempts
     message: 'Too many login attempts, please try again after 15 minutes',
-    skipSuccessfulRequests: true, // Don't count successful logins
+    standardHeaders: true,
+    legacyHeaders: false,
+    validate: { xForwardedForHeader: false } // Disable validation for Replit/Proxy
+});
+skipSuccessfulRequests: true, // Don't count successful logins
 });
 
 const registerLimiter = rateLimit({
