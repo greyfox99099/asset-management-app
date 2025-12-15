@@ -1,0 +1,247 @@
+import { useState, useEffect, useRef } from 'react';
+import axios from 'axios';
+import { API_BASE_URL } from '../config';
+import { X } from 'lucide-react';
+
+const InputField = ({ label, name, type = "text", placeholder, required = false, value, onChange }) => (
+    <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+        <input
+            type={type}
+            name={name}
+            required={required}
+            value={value}
+            onChange={onChange}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        />
+    </div>
+);
+
+const AssetForm = ({ asset, onClose, onSubmit }) => {
+    const [formData, setFormData] = useState({
+        asset_id: '',
+        name: '',
+        description: '',
+        quantity: '',
+        unit: '',
+        location: '',
+        department: '',
+        category: '',
+        sub_category: '',
+        purchase_date: '',
+        date_of_use: '',
+        status: 'In Storage',
+        purchase_price: '',
+        expected_life_years: '',
+        depreciation_annual: '',
+        depreciation_monthly: '',
+        last_calibrated_date: '',
+        next_calibration_date: '',
+        warranty_expiry_date: '',
+        photo: null,
+        document: null
+    });
+
+    useEffect(() => {
+        if (asset) {
+            setFormData({
+                asset_id: asset.asset_id || '',
+                name: asset.name || '',
+                description: asset.description || '',
+                quantity: asset.quantity || '',
+                unit: asset.unit || '',
+                location: asset.location || '',
+                department: asset.department || '',
+                category: asset.category || '',
+                sub_category: asset.sub_category || '',
+                purchase_date: asset.purchase_date ? asset.purchase_date.split('T')[0] : '',
+                date_of_use: asset.date_of_use ? asset.date_of_use.split('T')[0] : '',
+                status: asset.status || 'In Storage',
+                purchase_price: asset.purchase_price || '',
+                expected_life_years: asset.expected_life_years || '',
+                depreciation_annual: asset.depreciation_annual || '',
+                depreciation_monthly: asset.depreciation_monthly || '',
+                last_calibrated_date: asset.last_calibrated_date ? asset.last_calibrated_date.split('T')[0] : '',
+                next_calibration_date: asset.next_calibration_date ? asset.next_calibration_date.split('T')[0] : '',
+                warranty_expiry_date: asset.warranty_expiry_date ? asset.warranty_expiry_date.split('T')[0] : '',
+                photo: null,
+                document: null
+            });
+        }
+    }, [asset]);
+
+    const handleChange = (e) => {
+        const { name, value, files } = e.target;
+        if (files) {
+            setFormData(prev => ({ ...prev, [name]: files[0] }));
+        } else {
+            setFormData(prev => ({ ...prev, [name]: value }));
+        }
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+
+        const data = new FormData();
+        Object.keys(formData).forEach(key => {
+            if (formData[key] !== null && formData[key] !== '' && formData[key] !== undefined) {
+                data.append(key, formData[key]);
+            }
+        });
+
+        try {
+            if (asset) {
+                await axios.put(`${API_BASE_URL}/api/assets/${asset.id}`, data, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
+            } else {
+                await axios.post(`${API_BASE_URL}/api/assets`, data, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
+            }
+            onSubmit();
+        } catch (error) {
+            console.error('Error saving asset:', error);
+            alert('Error saving asset');
+        }
+    };
+
+
+
+    return (
+        <form onSubmit={handleSubmit} className="flex flex-col h-full w-full bg-white min-h-0">
+            <div className="flex items-center justify-between p-6 border-b border-gray-100 shrink-0">
+                <h2 className="text-xl font-bold text-gray-900">
+                    {asset ? 'Edit Asset' : 'Add New Asset'}
+                </h2>
+                <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
+                    <X size={24} />
+                </button>
+            </div>
+
+            <div className="p-6 md:p-8 overflow-y-auto flex-1">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                    {/* General Information */}
+                    <div className="md:col-span-2">
+                        <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4 border-b pb-2">General Information</h3>
+                    </div>
+
+                    <div className="md:col-span-2">
+                        <InputField label="Serial Number" name="asset_id" placeholder="Enter Serial Number" value={formData.asset_id} onChange={handleChange} />
+                    </div>
+
+                    <div className="md:col-span-2">
+                        <InputField label="Item Name / Description" name="name" required={true} placeholder="Asset Name" value={formData.name} onChange={handleChange} />
+                    </div>
+
+                    <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Full Description</label>
+                        <textarea
+                            name="description"
+                            rows="2"
+                            value={formData.description}
+                            onChange={handleChange}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            placeholder="Detailed description..."
+                        />
+                    </div>
+
+                    <InputField label="Category" name="category" value={formData.category} onChange={handleChange} />
+                    <InputField label="Sub Category" name="sub_category" value={formData.sub_category} onChange={handleChange} />
+                    <InputField label="Quantity" name="quantity" type="number" value={formData.quantity} onChange={handleChange} />
+                    <InputField label="Unit" name="unit" placeholder="e.g. Unit, Set, Pcs" value={formData.unit} onChange={handleChange} />
+
+                    {/* Location & Assignment */}
+                    <div className="md:col-span-2 mt-4">
+                        <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4 border-b pb-2">Location & Assignment</h3>
+                    </div>
+
+                    <InputField label="Location" name="location" value={formData.location} onChange={handleChange} />
+                    <InputField label="Department" name="department" value={formData.department} onChange={handleChange} />
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                        <select
+                            name="status"
+                            value={formData.status}
+                            onChange={handleChange}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        >
+                            <option value="In Storage">In Storage</option>
+                            <option value="In Use">In Use</option>
+                            <option value="Maintenance">Maintenance</option>
+                            <option value="Retired">Retired</option>
+                        </select>
+                    </div>
+
+                    {/* Financials & Dates */}
+                    <div className="md:col-span-2 mt-4">
+                        <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4 border-b pb-2">Financials & Dates</h3>
+                    </div>
+
+                    <InputField label="Purchase Price" name="purchase_price" type="number" value={formData.purchase_price} onChange={handleChange} />
+                    <InputField label="Date of Purchase" name="purchase_date" type="date" value={formData.purchase_date} onChange={handleChange} />
+                    <InputField label="Date of Use" name="date_of_use" type="date" value={formData.date_of_use} onChange={handleChange} />
+                    <InputField label="Expected Life (Years)" name="expected_life_years" type="number" value={formData.expected_life_years} onChange={handleChange} />
+                    <InputField label="Depreciation (Annual)" name="depreciation_annual" type="number" value={formData.depreciation_annual} onChange={handleChange} />
+                    <InputField label="Depreciation (Monthly)" name="depreciation_monthly" type="number" value={formData.depreciation_monthly} onChange={handleChange} />
+                    <InputField label="Warranty Exp Date" name="warranty_expiry_date" type="date" value={formData.warranty_expiry_date} onChange={handleChange} />
+
+                    {/* Maintenance */}
+                    <div className="md:col-span-2 mt-4">
+                        <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4 border-b pb-2">Maintenance</h3>
+                    </div>
+
+                    <InputField label="Last Calibrated Date" name="last_calibrated_date" type="date" value={formData.last_calibrated_date} onChange={handleChange} />
+                    <InputField label="Next To Calibrate Date" name="next_calibration_date" type="date" value={formData.next_calibration_date} onChange={handleChange} />
+
+
+                    {/* Files */}
+                    <div className="md:col-span-2 mt-4">
+                        <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4 border-b pb-2">Attachments</h3>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Photo</label>
+                        <input
+                            type="file"
+                            name="photo"
+                            accept="image/*"
+                            onChange={handleChange}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Document (PDF/Doc)</label>
+                        <input
+                            type="file"
+                            name="document"
+                            accept=".pdf,.doc,.docx"
+                            onChange={handleChange}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        />
+                    </div>
+                </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-100 shrink-0 bg-gray-50 rounded-b-lg">
+                <button
+                    type="button"
+                    onClick={onClose}
+                    className="px-5 py-2.5 text-gray-600 bg-white border border-gray-200 hover:bg-gray-50 rounded-lg font-medium transition-colors"
+                >
+                    Cancel
+                </button>
+                <button
+                    type="submit"
+                    className="px-5 py-2.5 bg-blue-600 text-white hover:bg-blue-700 rounded-lg font-medium transition-colors shadow-lg shadow-blue-600/20"
+                >
+                    {asset ? 'Update Asset' : 'Create Asset'}
+                </button>
+            </div>
+        </form>
+    );
+};
+
+export default AssetForm;
