@@ -72,8 +72,9 @@ const ImportModal = ({ isOpen, onClose, onSuccess }) => {
             link.click();
             link.parentNode.removeChild(link);
         } catch (err) {
-            console.error(err);
-            alert('Failed to download template');
+            console.error('Download template error:', err);
+            console.log('Error details:', err.response?.data);
+            alert(`Failed to download template: ${err.message}`);
         }
     };
 
@@ -167,8 +168,8 @@ const ImportModal = ({ isOpen, onClose, onSuccess }) => {
                                 onClick={handleUpload}
                                 disabled={!file || uploading}
                                 className={`w-full py-3 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all ${!file || uploading
-                                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                        : 'bg-green-600 text-white hover:bg-green-700 shadow-lg shadow-green-600/20'
+                                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                    : 'bg-green-600 text-white hover:bg-green-700 shadow-lg shadow-green-600/20'
                                     }`}
                             >
                                 {uploading ? (
