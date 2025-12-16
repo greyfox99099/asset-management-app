@@ -158,6 +158,11 @@ app.get('/api/public/assets/:id', async (req, res) => {
     }
 });
 
+// Keep-Alive Endpoint for Replit
+app.get('/', (req, res) => {
+    res.send('Server is running. Ping this URL to keep it alive.');
+});
+
 // Start server - Listen on all network interfaces for mobile access
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on port ${PORT}`);
