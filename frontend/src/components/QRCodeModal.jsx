@@ -164,9 +164,10 @@ const QRCodeModal = ({ isOpen, onClose, asset }) => {
     };
 
     return (
-        <div className="fixed inset-0 bg-gray-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg relative transition-all my-8">
-                <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+        <div className="fixed inset-0 bg-gray-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg relative flex flex-col max-h-[90vh] my-8 transition-all">
+                {/* Fixed Header */}
+                <div className="p-4 border-b border-gray-100 flex items-center justify-between flex-none bg-white rounded-t-2xl z-10">
                     <h3 className="font-bold text-gray-900">Asset QR Code</h3>
                     <button
                         onClick={onClose}
@@ -176,9 +177,10 @@ const QRCodeModal = ({ isOpen, onClose, asset }) => {
                     </button>
                 </div>
 
-                <div className="p-6 flex flex-col items-center gap-6">
+                {/* Scrollable Body */}
+                <div className="p-6 flex flex-col items-center gap-6 overflow-y-auto custom-scrollbar flex-1">
                     {/* Size Selector */}
-                    <div className="w-full">
+                    <div className="w-full sticky top-0 bg-white z-10 pb-4 border-b border-gray-50">
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                             QR Code Size
                         </label>
@@ -199,7 +201,7 @@ const QRCodeModal = ({ isOpen, onClose, asset }) => {
                     </div>
 
                     {/* QR Code */}
-                    <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 relative">
+                    <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 relative shrink-0">
                         <QRCode
                             id="qr-code-svg"
                             value={qrData}
@@ -219,12 +221,12 @@ const QRCodeModal = ({ isOpen, onClose, asset }) => {
                     </div>
 
                     {/* Display URL for debugging */}
-                    <div className="w-full bg-blue-50 border border-blue-200 rounded-lg p-3">
+                    <div className="w-full bg-blue-50 border border-blue-200 rounded-lg p-3 shrink-0">
                         <p className="text-xs font-medium text-blue-900 mb-1">QR Code URL:</p>
                         <p className="text-xs text-blue-700 break-all font-mono">{qrData}</p>
                     </div>
 
-                    <div className="w-full">
+                    <div className="w-full shrink-0">
                         <h4 className="font-bold text-gray-900 mb-4 text-center">Asset Details</h4>
                         {/* Details Table */}
                         <div className="mt-6 border-t border-gray-100 pt-4 w-full text-left">
@@ -258,23 +260,23 @@ const QRCodeModal = ({ isOpen, onClose, asset }) => {
                             </table>
                         </div>
                     </div>
+                </div>
 
-                    {/* Action Buttons */}
-                    <div className="w-full flex gap-2">
-                        <button
-                            onClick={handlePrint}
-                            className="flex-1 bg-green-600 text-white py-2.5 rounded-lg font-medium hover:bg-green-700 transition flex items-center justify-center gap-2"
-                        >
-                            <Printer size={18} />
-                            Print QR Code
-                        </button>
-                        <button
-                            onClick={onClose}
-                            className="flex-1 bg-gray-600 text-white py-2.5 rounded-lg font-medium hover:bg-gray-700 transition"
-                        >
-                            Close
-                        </button>
-                    </div>
+                {/* Fixed Footer Actions */}
+                <div className="p-4 border-t border-gray-100 flex gap-2 flex-none bg-white rounded-b-2xl z-10">
+                    <button
+                        onClick={handlePrint}
+                        className="flex-1 bg-green-600 text-white py-2.5 rounded-lg font-medium hover:bg-green-700 transition flex items-center justify-center gap-2"
+                    >
+                        <Printer size={18} />
+                        Print QR Code
+                    </button>
+                    <button
+                        onClick={onClose}
+                        className="flex-1 bg-gray-600 text-white py-2.5 rounded-lg font-medium hover:bg-gray-700 transition"
+                    >
+                        Close
+                    </button>
                 </div>
             </div>
         </div>
