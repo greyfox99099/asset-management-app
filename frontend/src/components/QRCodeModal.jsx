@@ -102,6 +102,9 @@ const QRCodeModal = ({ isOpen, onClose, asset }) => {
                         align-items: center;
                         justify-content: center;
                         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                        z-index: 9999;
+                        -webkit-print-color-adjust: exact;
+                        print-color-adjust: exact;
                     }
                     .logo-overlay img {
                         width: 40px;
