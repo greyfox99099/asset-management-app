@@ -12,7 +12,10 @@ export const calculateCurrentValue = (asset) => {
     const price = parseFloat(asset.purchase_price);
     if (!asset.depreciation_monthly) return price;
 
-    const startDateStr = asset.date_of_use || asset.purchase_date;
+    // User Request: Only depreciate if asset is IN USE (has date_of_use)
+    // If date_of_use is empty, it means asset is new/storage -> No Depreciation.
+    const startDateStr = asset.date_of_use;
+
     if (!startDateStr) return price;
 
     const startDate = new Date(startDateStr);
