@@ -60,8 +60,12 @@ const ImportModal = ({ isOpen, onClose, onSuccess }) => {
 
     const handleDownloadTemplate = async () => {
         try {
+            const token = localStorage.getItem('token');
             const response = await axios.get(`${API_BASE_URL}/api/assets/import-template`, {
                 responseType: 'blob', // Important
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
             });
 
             const url = window.URL.createObjectURL(new Blob([response.data]));
