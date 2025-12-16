@@ -217,18 +217,28 @@ router.get('/me', async (req, res) => {
     }
 });
 
-// Verify email
+// Verify Email Endpoint
 router.get('/verify-email/:token', async (req, res) => {
     try {
         const { token } = req.params;
+        console.log('Verifying token:', token);
 
         // Find user with this token
+        // Debug: Check if any user has this token
+        const debugCheck = await query('SELECT username, verification_token FROM users WHERE verification_token = ?', [token]);
+        if (debugCheck.rows.length > 0) {
+            console.log('Match found for user:', debugCheck.rows[0].username);
+        } else {
+            console.log('No user found with this token');
+        }
+
         const result = await query(
             'SELECT * FROM users WHERE verification_token = ?',
             [token]
         );
 
         if (result.rows.length === 0) {
+            console.log('Verification failed: Invalid token');
             return res.status(400).json({ error: 'Invalid or expired verification token' });
         }
 
