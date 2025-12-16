@@ -102,52 +102,54 @@ const PublicAssetView = () => {
                     </div>
                 </div>
 
-                {/* Photo */}
-                {asset.photo_url && (
-                    <div className="bg-white shadow-xl">
-                        <img
-                            src={`${API_BASE_URL}${asset.photo_url}`}
-                            alt={asset.name}
-                            className="w-full h-64 object-cover"
-                        />
-                    </div>
-                )}
-
-                {/* Asset Information */}
-                <div className="bg-white rounded-b-2xl shadow-xl p-6">
+                {/* Attachments Section */}
+                <div className="bg-white rounded-b-2xl shadow-xl p-6 mt-6">
                     <h2 className="text-lg font-bold text-gray-900 mb-4 pb-3 border-b border-gray-200">
-                        Asset Details
+                        Attachments
                     </h2>
 
-                    <div className="space-y-0">
-                        <InfoRow label="Serial Number" value={asset.asset_id} />
-                        <InfoRow label="Description" value={asset.description} />
-                        <InfoRow label="Category" value={asset.category} />
-                        <InfoRow label="Sub Category" value={asset.sub_category} />
-                        <InfoRow label="Quantity" value={asset.quantity ? `${asset.quantity} ${asset.unit || ''}`.trim() : null} />
-                        <InfoRow label="Location" value={asset.location} icon={MapPin} />
-                        <InfoRow label="Department" value={asset.department} />
-                        <InfoRow label="Purchase Date" value={asset.purchase_date} icon={Calendar} />
-                        <InfoRow label="Date of Use" value={asset.date_of_use} icon={Calendar} />
-                        <InfoRow label="Expected Life" value={asset.expected_life_years ? `${asset.expected_life_years} years` : null} />
-                        <InfoRow label="Last Calibrated" value={asset.last_calibrated_date} icon={Wrench} />
-                        <InfoRow label="Next Calibration" value={asset.next_calibration_date} icon={Wrench} />
-                        <InfoRow label="Warranty Expiry" value={asset.warranty_expiry_date} icon={Calendar} />
-                    </div>
-
-                    {/* Document */}
-                    {asset.document_url && (
-                        <div className="mt-6 pt-6 border-t border-gray-200">
-                            <a
-                                href={`${API_BASE_URL}${asset.document_url}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center justify-center gap-2 w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition"
-                            >
-                                <Package size={20} />
-                                View Document
-                            </a>
+                    {asset.attachments && asset.attachments.length > 0 ? (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {asset.attachments.map((file) => (
+                                <div key={file.id} className="border border-gray-200 rounded-xl overflow-hidden bg-gray-50">
+                                    {file.file_type && file.file_type.startsWith('image/') ? (
+                                        <div className="relative group">
+                                            <img
+                                                src={`${API_BASE_URL}${file.file_url}`}
+                                                alt={file.file_name}
+                                                className="w-full h-48 object-cover"
+                                            />
+                                            <a
+                                                href={`${API_BASE_URL}${file.file_url}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100 text-white font-medium"
+                                            >
+                                                View Image
+                                            </a>
+                                        </div>
+                                    ) : (
+                                        <div className="p-6 flex flex-col items-center justify-center text-center h-48">
+                                            <Package className="w-12 h-12 text-blue-500 mb-3" />
+                                            <p className="text-sm font-medium text-gray-900 mb-2 truncate max-w-full px-4">{file.file_name}</p>
+                                            <a
+                                                href={`${API_BASE_URL}${file.file_url}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-sm text-blue-600 hover:text-blue-700 font-semibold"
+                                            >
+                                                Download / View
+                                            </a>
+                                        </div>
+                                    )}
+                                    <div className="bg-white p-3 border-t border-gray-100">
+                                        <p className="text-xs text-gray-500 truncate">{file.file_name}</p>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
+                    ) : (
+                        <p className="text-gray-500 italic text-center py-4">No attachments available.</p>
                     )}
                 </div>
 
