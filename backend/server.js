@@ -158,9 +158,16 @@ app.get('/api/public/assets/:id', async (req, res) => {
     }
 });
 
-// Keep-Alive Endpoint for Replit
-app.get('/', (req, res) => {
-    res.send('Server is running. Ping this URL to keep it alive.');
+// Keep-Alive Endpoint for Replit (with DB activity to prevent sleep)
+app.get('/', async (req, res) => {
+    try {
+        // Perform a lightweight DB query to keep the connection alive
+        await pool.query('SELECT 1');
+        res.send('Server is active (DB Connected).');
+    } catch (err) {
+        console.error('Keep-alive DB Error:', err);
+        res.status(500).send('Server is running but DB is disconnected.');
+    }
 });
 
 // Start server - Listen on all network interfaces for mobile access
