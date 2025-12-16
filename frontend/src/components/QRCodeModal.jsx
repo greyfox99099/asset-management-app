@@ -77,14 +77,39 @@ const QRCodeModal = ({ isOpen, onClose, asset }) => {
                         background: white;
                         display: inline-block;
                         box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                        max-width: 100%;
+                    }
+                    .qr-wrapper {
+                        position: relative;
+                        display: flex;
+                        justify-content: center;
+                        margin-bottom: 20px;
                     }
                     .qr-code {
                         display: block;
-                        margin: 0 auto;
+                        max-width: 100%;
+                        height: auto;
+                    }
+                    .logo-overlay {
+                        position: absolute;
+                        top: 50%;
+                        left: 50%;
+                        transform: translate(-50%, -50%);
+                        background: white;
+                        padding: 4px;
+                        border-radius: 50%;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                    }
+                    .logo-overlay img {
+                        width: 40px;
+                        height: 40px;
+                        object-fit: contain;
                     }
                     .asset-info {
                         text-align: center;
-                        margin-top: 15px;
                         padding-top: 15px;
                         border-top: 1px solid #e5e7eb;
                     }
@@ -93,6 +118,7 @@ const QRCodeModal = ({ isOpen, onClose, asset }) => {
                         font-weight: bold;
                         color: #111827;
                         margin-bottom: 5px;
+                        word-break: break-word;
                     }
                     .asset-id {
                         font-size: 12px;
@@ -103,26 +129,35 @@ const QRCodeModal = ({ isOpen, onClose, asset }) => {
             </head>
             <body>
                 <div class="qr-container">
-                    <div class="qr-code">
-                        ${svgData}
+                    <div class="qr-wrapper">
+                        <div class="qr-code">
+                            ${svgData}
+                        </div>
+                        <div class="logo-overlay">
+                            <img src="${window.location.origin}/logo-gims.jpeg" alt="GIMS Logo" />
+                        </div>
                     </div>
                     <div class="asset-info">
                         <div class="asset-name">${asset.name}</div>
                         <div class="asset-id">ID: ${asset.asset_id || asset.id}</div>
                     </div>
                 </div>
+                <script>
+                    // Wait for image to load before printing
+                    window.onload = function() {
+                        setTimeout(function() {
+                            window.print();
+                            window.close();
+                        }, 500);
+                    };
+                </script>
             </body>
             </html>
         `);
 
         printWindow.document.close();
 
-        // Wait for content to load before printing
-        setTimeout(() => {
-            printWindow.focus();
-            printWindow.print();
-            printWindow.close();
-        }, 250);
+
     };
 
     return (
