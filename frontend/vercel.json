@@ -1,7 +1,11 @@
 {
     "rewrites": [
         {
-            "source": "/(.*)",
+            "source": "/((?!assets/|.*\\..*).*)",
+            "destination": "/index.html"
+        },
+        {
+            "source": "/verify-email/(.*)",
             "destination": "/index.html"
         }
     ]
