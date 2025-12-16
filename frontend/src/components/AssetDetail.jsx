@@ -171,34 +171,54 @@ const AssetDetail = () => {
                                 </table>
                             </div>
 
-                            {/* Attachments if any */}
-                            {asset.photo_url || asset.document_url ? (
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
-                                    {asset.photo_url && (
-                                        <div className="border border-gray-200 rounded-xl p-4 flex flex-col gap-3">
-                                            <span className="text-sm font-medium text-gray-500">Photo</span>
-                                            <img
-                                                src={`${API_BASE_URL}${asset.photo_url} `}
-                                                alt={asset.name}
-                                                className="w-full h-48 object-cover rounded-lg bg-gray-100"
-                                            />
-                                        </div>
-                                    )}
-                                    {asset.document_url && (
-                                        <div className="border border-gray-200 rounded-xl p-4 flex flex-col gap-3">
-                                            <p className="text-sm font-medium text-gray-500 mb-2">Document</p>
-                                            <a
-                                                href={`${API_BASE_URL}${asset.document_url} `}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="flex items-center justify-center p-4 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition font-medium h-full"
-                                            >
-                                                View Document
-                                            </a>
-                                        </div>
-                                    )}
-                                </div>
-                            ) : null}
+                            {/* Attachments Section */}
+                            <div className="mt-8 pt-8 border-t border-gray-200">
+                                <h3 className="text-lg font-bold text-gray-900 mb-4">Attachments</h3>
+                                {asset.attachments && asset.attachments.length > 0 ? (
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        {asset.attachments.map((file) => (
+                                            <div key={file.id} className="border border-gray-200 rounded-xl overflow-hidden bg-white">
+                                                {file.file_type && file.file_type.startsWith('image/') ? (
+                                                    <div className="relative group">
+                                                        <img
+                                                            src={`${API_BASE_URL}${file.file_url}`}
+                                                            alt={file.file_name}
+                                                            className="w-full h-48 object-cover"
+                                                        />
+                                                        <a
+                                                            href={`${API_BASE_URL}${file.file_url}`}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100 text-white font-medium"
+                                                        >
+                                                            View Image
+                                                        </a>
+                                                    </div>
+                                                ) : (
+                                                    <div className="p-6 flex flex-col items-center justify-center text-center h-48 bg-gray-50">
+                                                        <Package className="w-12 h-12 text-blue-500 mb-3" />
+                                                        <p className="text-sm font-medium text-gray-900 mb-2 truncate max-w-full px-4">{file.file_name}</p>
+                                                        <a
+                                                            href={`${API_BASE_URL}${file.file_url}`}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="text-sm text-blue-600 hover:text-blue-700 font-semibold"
+                                                        >
+                                                            Download / View
+                                                        </a>
+                                                    </div>
+                                                )}
+                                                <div className="bg-white p-3 border-t border-gray-100 flex justify-between items-center">
+                                                    <span className="text-xs text-gray-500 truncate max-w-[150px]">{file.file_name}</span>
+                                                    <span className="text-xs text-gray-400">{new Date(file.uploaded_at).toLocaleDateString()}</span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <p className="text-gray-500 italic">No attachments available for this asset.</p>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
