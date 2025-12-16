@@ -15,14 +15,6 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 5001;
 
-// DEBUG: Log all requests immediately
-app.use((req, res, next) => {
-    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
-    console.log('Origin:', req.headers.origin);
-    console.log('IP:', req.ip);
-    next();
-});
-
 // Trust proxy (required for Replit/Render/Vercel)
 app.set('trust proxy', 1);
 
@@ -53,19 +45,15 @@ const allowedOrigins = [
 // CORS Configuration
 const corsOptions = {
     origin: function (origin, callback) {
-        // Allow all origins for debugging connectivity issues
-        return callback(null, true);
-
-        // Original Strict Logic (Commented out for now)
-        /*
+        // Allow requests with no origin (like mobile apps or curl requests)
         if (!origin) return callback(null, true);
+
         if (allowedOrigins.indexOf(origin) !== -1) {
             callback(null, true);
         } else {
             console.log('CORS blocked origin:', origin);
             callback(new Error('Not allowed by CORS'));
         }
-        */
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],

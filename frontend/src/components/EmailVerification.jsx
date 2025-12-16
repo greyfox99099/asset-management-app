@@ -68,13 +68,7 @@ const EmailVerification = () => {
                         <XCircle className="w-16 h-16 text-red-600 mx-auto mb-4" />
                         <p className="text-red-700 font-semibold mb-4">{message}</p>
 
-                        {/* Debug Info */}
-                        <div className="mb-4 p-3 bg-gray-100 rounded text-xs text-left overflow-auto max-w-full font-mono">
-                            <p className="font-bold text-gray-500 mb-1 border-b pb-1">Debug Info:</p>
-                            <p><span className="font-semibold">Target:</span> {API_BASE_URL}</p>
-                            <p><span className="font-semibold">Status:</span> {error?.response?.status || 'Network Error'}</p>
-                            <p><span className="font-semibold">Details:</span> {JSON.stringify(error?.response?.data || error?.message)}</p>
-                        </div>
+                        {/* Debug Info Removed for Production */}
 
                         <Link
                             to="/login"
