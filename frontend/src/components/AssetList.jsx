@@ -1,12 +1,14 @@
-import { Edit2, Trash2, Search, QrCode } from 'lucide-react';
+import { Edit2, Trash2, Search, QrCode, Upload } from 'lucide-react';
 import { useState } from 'react';
 import { formatCurrency, calculateCurrentValue } from '../utils';
 import QRCodeModal from './QRCodeModal';
+import ImportModal from './ImportModal';
 
 const AssetList = ({ assets, onEdit, onDelete }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [isQRModalOpen, setIsQRModalOpen] = useState(false);
     const [selectedAssetForQR, setSelectedAssetForQR] = useState(null);
+    const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
     const handleOpenQR = (asset) => {
         setSelectedAssetForQR(asset);
@@ -29,7 +31,16 @@ const AssetList = ({ assets, onEdit, onDelete }) => {
     return (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="p-6 border-b border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <h3 className="text-lg font-bold text-gray-900">All Assets</h3>
+                <div className="flex items-center gap-4">
+                    <h3 className="text-lg font-bold text-gray-900">All Assets</h3>
+                    <button
+                        onClick={() => setIsImportModalOpen(true)}
+                        className="flex items-center gap-2 px-3 py-1.5 bg-green-50 text-green-600 hover:bg-green-100 rounded-lg text-sm font-medium transition-colors border border-green-200"
+                    >
+                        <Upload size={16} />
+                        Import
+                    </button>
+                </div>
                 <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
                     <input
@@ -162,6 +173,16 @@ const AssetList = ({ assets, onEdit, onDelete }) => {
                 isOpen={isQRModalOpen}
                 onClose={handleCloseQR}
                 asset={selectedAssetForQR}
+            />
+
+            <ImportModal
+                isOpen={isImportModalOpen}
+                onClose={() => setIsImportModalOpen(false)}
+                onSuccess={() => {
+                    // Trigger a refresh indirectly or directly if possible
+                    // Ideally pass a refreshAssets prop from DashboardParent
+                    window.location.reload(); // Simple refresh for now
+                }}
             />
         </div >
     );
