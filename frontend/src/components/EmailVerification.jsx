@@ -63,6 +63,14 @@ const EmailVerification = () => {
                     <div className="text-center">
                         <XCircle className="w-16 h-16 text-red-600 mx-auto mb-4" />
                         <p className="text-red-700 font-semibold mb-4">{message}</p>
+
+                        {/* Debug Info */}
+                        <div className="mb-4 p-3 bg-gray-100 rounded text-xs text-left overflow-auto max-w-full">
+                            <p className="font-bold text-gray-500 mb-1">Debug Info:</p>
+                            <p>Target: {API_BASE_URL}</p>
+                            <p>Token: {token?.substring(0, 10)}...</p>
+                        </div>
+
                         <Link
                             to="/login"
                             className="inline-block bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition"
