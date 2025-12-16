@@ -113,13 +113,11 @@ const AssetForm = ({ asset, onClose, onSubmit }) => {
             }
         });
 
-        const config = { headers: { 'Content-Type': 'multipart/form-data' } };
-
         try {
             if (asset) {
-                await axios.put(`${API_BASE_URL}/api/assets/${asset.id}`, data, config);
+                await axios.put(`${API_BASE_URL}/api/assets/${asset.id}`, data);
             } else {
-                await axios.post(`${API_BASE_URL}/api/assets`, data, config);
+                await axios.post(`${API_BASE_URL}/api/assets`, data);
             }
             onSubmit();
         } catch (error) {
