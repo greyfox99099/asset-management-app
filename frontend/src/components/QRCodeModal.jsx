@@ -165,7 +165,7 @@ const QRCodeModal = ({ isOpen, onClose, asset }) => {
 
     return (
         <div className="fixed inset-0 bg-gray-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden scale-100 transition-all my-8">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg relative transition-all my-8">
                 <div className="p-4 border-b border-gray-100 flex items-center justify-between">
                     <h3 className="font-bold text-gray-900">Asset QR Code</h3>
                     <button
@@ -187,7 +187,7 @@ const QRCodeModal = ({ isOpen, onClose, asset }) => {
                                 <button
                                     key={key}
                                     onClick={() => setQrSize(key)}
-                                    className={`px-3 py-2 rounded-lg text-sm font-medium transition ${qrSize === key
+                                    className={`px-3 py-3 rounded-lg text-sm font-medium transition h-auto whitespace-normal leading-tight ${qrSize === key
                                         ? 'bg-blue-600 text-white'
                                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                         }`}
