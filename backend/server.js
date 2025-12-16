@@ -126,7 +126,11 @@ app.use('/api/reports', authMiddleware, reportRoutes);
 // User Management Routes (admin only - middleware inside router)
 app.use('/api/users', authMiddleware, userRoutes);
 
-// Public asset view (no authentication required)
+// Asset Routes (protected) - now handles multi-file upload
+const assetRoutes = require('./assetRoutes');
+app.use('/api/assets', authMiddleware, assetRoutes); // Mount at /api/assets
+
+// Public view (updated to support attachments logic if needed, but keeping simple for now)
 app.get('/api/public/assets/:id', async (req, res) => {
     try {
         const { id } = req.params;
@@ -135,161 +139,22 @@ app.get('/api/public/assets/:id', async (req, res) => {
             return res.status(404).json({ error: 'Asset not found' });
         }
 
-        // Return asset data without financial information
+        // Return asset data
         const asset = result.rows[0];
+
+        // Fetch attachments for public view too (optional, but good for completeness)
+        const attachments = await pool.query('SELECT * FROM asset_attachments WHERE asset_id = ?', [id]);
+
         const publicData = {
-            id: asset.id,
-            asset_id: asset.asset_id,
-            name: asset.name,
-            description: asset.description,
-            category: asset.category,
-            sub_category: asset.sub_category,
-            quantity: asset.quantity,
-            unit: asset.unit,
-            location: asset.location,
-            department: asset.department,
-            status: asset.status,
-            purchase_date: asset.purchase_date,
-            date_of_use: asset.date_of_use,
-            expected_life_years: asset.expected_life_years,
-            last_calibrated_date: asset.last_calibrated_date,
-            next_calibration_date: asset.next_calibration_date,
-            warranty_expiry_date: asset.warranty_expiry_date,
-            photo_url: asset.photo_url,
-            document_url: asset.document_url
-            // Exclude: purchase_price, depreciation_annual, depreciation_monthly
+            ...asset,
+            attachments: attachments.rows
+            // keeping all fields for public view simplified
         };
 
         res.json(publicData);
     } catch (err) {
         console.error(err.message);
         res.status(500).json({ error: 'Server Error' });
-    }
-});
-
-// Protected Routes
-
-// Get all assets
-app.get('/api/assets', authMiddleware, async (req, res) => {
-    try {
-        const result = await pool.query('SELECT * FROM assets ORDER BY id ASC');
-        res.json(result.rows);
-    } catch (err) {
-        console.error(err.message);
-        res.status(500).send('Server Error');
-    }
-});
-
-// Get single asset
-app.get('/api/assets/:id', authMiddleware, async (req, res) => {
-    try {
-        const { id } = req.params;
-        const result = await pool.query('SELECT * FROM assets WHERE id = ?', [id]);
-        if (result.rows.length === 0) {
-            return res.status(404).json({ msg: 'Asset not found' });
-        }
-        res.json(result.rows[0]);
-    } catch (err) {
-        console.error(err.message);
-        res.status(500).send('Server Error');
-    }
-});
-
-// Create asset
-app.post('/api/assets', authMiddleware, upload.fields([{ name: 'photo', maxCount: 1 }, { name: 'document', maxCount: 1 }]), async (req, res) => {
-    try {
-        console.log('Received body:', req.body);
-        const {
-            asset_id, name, description, quantity, unit, location, department,
-            category, sub_category, purchase_date, date_of_use, status,
-            purchase_price, expected_life_years, depreciation_annual,
-            depreciation_monthly, last_calibrated_date, next_calibration_date,
-            warranty_expiry_date
-        } = req.body;
-
-        const photo_url = req.files['photo'] ? `/uploads/${req.files['photo'][0].filename}` : null;
-        const document_url = req.files['document'] ? `/uploads/${req.files['document'][0].filename}` : null;
-
-        const result = await pool.query(
-            `INSERT INTO assets (
-                asset_id, name, description, quantity, unit, location, department, 
-                category, sub_category, purchase_date, date_of_use, status, 
-                purchase_price, expected_life_years, depreciation_annual, 
-                depreciation_monthly, last_calibrated_date, next_calibration_date, 
-                warranty_expiry_date, photo_url, document_url
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *`,
-            [
-                asset_id, name, description, quantity, unit, location, department,
-                category, sub_category, purchase_date, date_of_use, status,
-                purchase_price, expected_life_years, depreciation_annual,
-                depreciation_monthly, last_calibrated_date, next_calibration_date,
-                warranty_expiry_date, photo_url, document_url
-            ]
-        );
-        res.json(result.rows[0]);
-    } catch (err) {
-        console.error(err.message);
-        res.status(500).send('Server Error');
-    }
-});
-
-// Update asset
-app.put('/api/assets/:id', authMiddleware, upload.fields([{ name: 'photo', maxCount: 1 }, { name: 'document', maxCount: 1 }]), async (req, res) => {
-    try {
-        const { id } = req.params;
-        const {
-            asset_id, name, description, quantity, unit, location, department,
-            category, sub_category, purchase_date, date_of_use, status,
-            purchase_price, expected_life_years, depreciation_annual,
-            depreciation_monthly, last_calibrated_date, next_calibration_date,
-            warranty_expiry_date
-        } = req.body;
-
-        // Fetch existing asset to keep old URLs if no new file is uploaded
-        const existing = await pool.query('SELECT photo_url, document_url FROM assets WHERE id = ?', [id]);
-        if (existing.rows.length === 0) {
-            return res.status(404).json({ msg: 'Asset not found' });
-        }
-
-        const photo_url = req.files['photo'] ? `/uploads/${req.files['photo'][0].filename}` : existing.rows[0].photo_url;
-        const document_url = req.files['document'] ? `/uploads/${req.files['document'][0].filename}` : existing.rows[0].document_url;
-
-        const result = await pool.query(
-            `UPDATE assets SET 
-                asset_id = ?, name = ?, description = ?, quantity = ?, unit = ?, location = ?, 
-                department = ?, category = ?, sub_category = ?, purchase_date = ?, 
-                date_of_use = ?, status = ?, purchase_price = ?, expected_life_years = ?, 
-                depreciation_annual = ?, depreciation_monthly = ?, last_calibrated_date = ?, 
-                next_calibration_date = ?, warranty_expiry_date = ?, photo_url = ?, 
-                document_url = ? 
-            WHERE id = ? RETURNING *`,
-            [
-                asset_id, name, description, quantity, unit, location, department,
-                category, sub_category, purchase_date, date_of_use, status,
-                purchase_price, expected_life_years, depreciation_annual,
-                depreciation_monthly, last_calibrated_date, next_calibration_date,
-                warranty_expiry_date, photo_url, document_url, id
-            ]
-        );
-        res.json(result.rows[0]);
-    } catch (err) {
-        console.error(err.message);
-        res.status(500).send('Server Error');
-    }
-});
-
-// Delete asset
-app.delete('/api/assets/:id', authMiddleware, async (req, res) => {
-    try {
-        const { id } = req.params;
-        const result = await pool.query('DELETE FROM assets WHERE id = ? RETURNING *', [id]);
-        if (result.rows.length === 0) {
-            return res.status(404).json({ msg: 'Asset not found' });
-        }
-        res.json({ msg: 'Asset deleted' });
-    } catch (err) {
-        console.error(err.message);
-        res.status(500).send('Server Error');
     }
 });
 
