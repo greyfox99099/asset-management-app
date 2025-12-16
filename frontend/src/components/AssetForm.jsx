@@ -43,31 +43,51 @@ const AssetForm = ({ asset, onClose, onSubmit }) => {
     });
 
     useEffect(() => {
-        if (asset) {
-            setFormData({
-                asset_id: asset.asset_id || '',
-                name: asset.name || '',
-                description: asset.description || '',
-                quantity: asset.quantity || '',
-                unit: asset.unit || '',
-                location: asset.location || '',
-                department: asset.department || '',
-                category: asset.category || '',
-                sub_category: asset.sub_category || '',
-                purchase_date: asset.purchase_date ? asset.purchase_date.split('T')[0] : '',
-                date_of_use: asset.date_of_use ? asset.date_of_use.split('T')[0] : '',
-                status: asset.status || 'In Storage',
-                purchase_price: asset.purchase_price || '',
-                expected_life_years: asset.expected_life_years || '',
-                depreciation_annual: asset.depreciation_annual || '',
-                depreciation_monthly: asset.depreciation_monthly || '',
-                last_calibrated_date: asset.last_calibrated_date ? asset.last_calibrated_date.split('T')[0] : '',
-                next_calibration_date: asset.next_calibration_date ? asset.next_calibration_date.split('T')[0] : '',
-                warranty_expiry_date: asset.warranty_expiry_date ? asset.warranty_expiry_date.split('T')[0] : '',
-                photo: null,
-                document: null
-            });
-        }
+        const loadAssetDetails = async () => {
+            if (asset) {
+                try {
+                    // Fetch full details including attachments
+                    const response = await axios.get(`${API_BASE_URL}/api/assets/${asset.id}`);
+                    const fullAsset = response.data;
+
+                    setFormData({
+                        asset_id: fullAsset.asset_id || '',
+                        name: fullAsset.name || '',
+                        description: fullAsset.description || '',
+                        quantity: fullAsset.quantity || '',
+                        unit: fullAsset.unit || '',
+                        location: fullAsset.location || '',
+                        department: fullAsset.department || '',
+                        category: fullAsset.category || '',
+                        sub_category: fullAsset.sub_category || '',
+                        purchase_date: fullAsset.purchase_date ? fullAsset.purchase_date.split('T')[0] : '',
+                        date_of_use: fullAsset.date_of_use ? fullAsset.date_of_use.split('T')[0] : '',
+                        status: fullAsset.status || 'In Storage',
+                        purchase_price: fullAsset.purchase_price || '',
+                        expected_life_years: fullAsset.expected_life_years || '',
+                        depreciation_annual: fullAsset.depreciation_annual || '',
+                        depreciation_monthly: fullAsset.depreciation_monthly || '',
+                        last_calibrated_date: fullAsset.last_calibrated_date ? fullAsset.last_calibrated_date.split('T')[0] : '',
+                        next_calibration_date: fullAsset.next_calibration_date ? fullAsset.next_calibration_date.split('T')[0] : '',
+                        warranty_expiry_date: fullAsset.warranty_expiry_date ? fullAsset.warranty_expiry_date.split('T')[0] : '',
+                        attachments: fullAsset.attachments || [], // Existing attachments
+                        photo: null,
+                        document: null
+                    });
+                } catch (error) {
+                    console.error("Error fetching asset details:", error);
+                    // Fallback to basic data if fetch fails
+                    setFormData(prev => ({
+                        ...prev,
+                        asset_id: asset.asset_id || '',
+                        name: asset.name || '',
+                        // ... ensure critical fields are set even if fetch fails
+                    }));
+                }
+            }
+        };
+
+        loadAssetDetails();
     }, [asset]);
 
     const handleChange = (e) => {
@@ -269,11 +289,11 @@ const AssetForm = ({ asset, onClose, onSubmit }) => {
                         )}
 
                         {/* Existing Attachments List */}
-                        {asset && asset.attachments && asset.attachments.length > 0 && (
+                        {formData.attachments && formData.attachments.some(f => f.id) && (
                             <div className="mt-6 space-y-3">
                                 <p className="text-xs font-semibold text-gray-500 uppercase">Existing Attachments:</p>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                    {asset.attachments.map((file) => (
+                                    {formData.attachments.filter(f => f.id).map((file) => (
                                         <div key={file.id} className="flex items-center p-3 border border-gray-200 rounded-lg bg-white">
                                             <div className="flex-1 min-w-0 mr-3">
                                                 <p className="text-sm font-medium text-gray-900 truncate">{file.file_name}</p>
@@ -295,9 +315,15 @@ const AssetForm = ({ asset, onClose, onSubmit }) => {
                                                         if (confirm('Delete this attachment?')) {
                                                             try {
                                                                 await axios.delete(`${API_BASE_URL}/api/assets/attachments/${file.id}`);
-                                                                // Refresh parent/close to update
-                                                                alert('File deleted. Please reopen form to refresh.');
+
+                                                                // Remove from view immediately
+                                                                setFormData(prev => ({
+                                                                    ...prev,
+                                                                    attachments: prev.attachments.filter(a => a.id !== file.id)
+                                                                }));
+
                                                             } catch (err) {
+                                                                console.error("Error deleting file:", err);
                                                                 alert('Failed to delete file');
                                                             }
                                                         }
