@@ -102,20 +102,24 @@ const AssetForm = ({ asset, onClose, onSubmit }) => {
 
         const data = new FormData();
         Object.keys(formData).forEach(key => {
-            if (formData[key] !== null && formData[key] !== '' && formData[key] !== undefined) {
+            if (key === 'attachments') {
+                if (formData.attachments && formData.attachments.length > 0) {
+                    formData.attachments.forEach(file => {
+                        data.append('attachments', file);
+                    });
+                }
+            } else if (formData[key] !== null && formData[key] !== '' && formData[key] !== undefined) {
                 data.append(key, formData[key]);
             }
         });
 
+        const config = { headers: { 'Content-Type': 'multipart/form-data' } };
+
         try {
             if (asset) {
-                await axios.put(`${API_BASE_URL}/api/assets/${asset.id}`, data, {
-                    headers: { 'Content-Type': 'multipart/form-data' }
-                });
+                await axios.put(`${API_BASE_URL}/api/assets/${asset.id}`, data, config);
             } else {
-                await axios.post(`${API_BASE_URL}/api/assets`, data, {
-                    headers: { 'Content-Type': 'multipart/form-data' }
-                });
+                await axios.post(`${API_BASE_URL}/api/assets`, data, config);
             }
             onSubmit();
         } catch (error) {
@@ -214,31 +218,103 @@ const AssetForm = ({ asset, onClose, onSubmit }) => {
                     <InputField label="Next To Calibrate Date" name="next_calibration_date" type="date" value={formData.next_calibration_date} onChange={handleChange} />
 
 
-                    {/* Files */}
+                    {/* Attachments */}
                     <div className="md:col-span-2 mt-4">
                         <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4 border-b pb-2">Attachments</h3>
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Photo</label>
-                        <input
-                            type="file"
-                            name="photo"
-                            accept="image/*"
-                            onChange={handleChange}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        />
-                    </div>
+                    <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Upload Files</label>
+                        <div className="flex items-center justify-center w-full">
+                            <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                                <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                    <p className="mb-2 text-sm text-gray-500"><span className="font-semibold">Click to upload</span> or drag and drop</p>
+                                    <p className="text-xs text-gray-500">Photos, Documents, PDF (Max 10MB each)</p>
+                                </div>
+                                <input
+                                    type="file"
+                                    className="hidden"
+                                    multiple
+                                    name="attachments"
+                                    onChange={(e) => {
+                                        const files = Array.from(e.target.files);
+                                        setFormData(prev => ({
+                                            ...prev,
+                                            attachments: [...(prev.attachments || []), ...files]
+                                        }));
+                                    }}
+                                />
+                            </label>
+                        </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Document (PDF/Doc)</label>
-                        <input
-                            type="file"
-                            name="document"
-                            accept=".pdf,.doc,.docx"
-                            onChange={handleChange}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        />
+                        {/* Staged Files List */}
+                        {formData.attachments && formData.attachments.length > 0 && (
+                            <div className="mt-4 space-y-2">
+                                <p className="text-xs font-semibold text-gray-500 uppercase">To be Uploaded:</p>
+                                {formData.attachments.map((file, index) => (
+                                    <div key={index} className="flex items-center justify-between p-2 bg-blue-50 rounded-lg">
+                                        <span className="text-sm truncate max-w-[200px]">{file.name}</span>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                const newAttachments = [...formData.attachments];
+                                                newAttachments.splice(index, 1);
+                                                setFormData(prev => ({ ...prev, attachments: newAttachments }));
+                                            }}
+                                            className="text-red-500 hover:text-red-700"
+                                        >
+                                            <X size={16} />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* Existing Attachments List */}
+                        {asset && asset.attachments && asset.attachments.length > 0 && (
+                            <div className="mt-6 space-y-3">
+                                <p className="text-xs font-semibold text-gray-500 uppercase">Existing Attachments:</p>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    {asset.attachments.map((file) => (
+                                        <div key={file.id} className="flex items-center p-3 border border-gray-200 rounded-lg bg-white">
+                                            <div className="flex-1 min-w-0 mr-3">
+                                                <p className="text-sm font-medium text-gray-900 truncate">{file.file_name}</p>
+                                                <p className="text-xs text-gray-500">{new Date(file.uploaded_at).toLocaleDateString()}</p>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <a
+                                                    href={`${API_BASE_URL}${file.file_url}`}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md"
+                                                    title="View"
+                                                >
+                                                    View
+                                                </a>
+                                                <button
+                                                    type="button"
+                                                    onClick={async () => {
+                                                        if (confirm('Delete this attachment?')) {
+                                                            try {
+                                                                await axios.delete(`${API_BASE_URL}/api/assets/attachments/${file.id}`);
+                                                                // Refresh parent/close to update
+                                                                alert('File deleted. Please reopen form to refresh.');
+                                                            } catch (err) {
+                                                                alert('Failed to delete file');
+                                                            }
+                                                        }
+                                                    }}
+                                                    className="p-1.5 text-red-600 hover:bg-red-50 rounded-md"
+                                                    title="Delete"
+                                                >
+                                                    <X size={16} />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
