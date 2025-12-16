@@ -160,13 +160,16 @@ app.get('/api/public/assets/:id', async (req, res) => {
 
 // Keep-Alive Endpoint for Replit (with DB activity to prevent sleep)
 app.get('/', async (req, res) => {
+    // Prevent caching
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
     try {
         // Perform a lightweight DB query to keep the connection alive
         await pool.query('SELECT 1');
-        res.send('Server is active (DB Connected).');
+        res.status(200).send('Server is active (DB Connected).');
     } catch (err) {
-        console.error('Keep-alive DB Error:', err);
-        res.status(500).send('Server is running but DB is disconnected.');
+        // Log error but return 200 so external pingers (KeepAlive) don't stop
+        console.error('Keep-alive DB Warn:', err.message);
+        res.status(200).send('Server is active (DB Reconnecting...).');
     }
 });
 
