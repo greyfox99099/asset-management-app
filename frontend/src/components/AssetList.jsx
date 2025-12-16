@@ -52,7 +52,7 @@ const AssetList = ({ assets, onEdit, onDelete }) => {
                     />
                 </div>
             </div>
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto custom-scrollbar pb-4">
                 <table className="w-full">
                     <thead className="bg-gray-50">
                         <tr>
