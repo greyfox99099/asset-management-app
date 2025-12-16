@@ -52,11 +52,12 @@ const AssetList = ({ assets, onEdit, onDelete }) => {
                     />
                 </div>
             </div>
-            <div className="overflow-x-auto custom-scrollbar pb-4">
-                <table className="w-full">
-                    <thead className="bg-gray-50">
+            {/* Table Container with fixed height - enables horizontal scroll to be visible */}
+            <div className="overflow-auto custom-scrollbar border-t border-gray-100" style={{ maxHeight: 'calc(100vh - 220px)' }}>
+                <table className="w-full border-collapse">
+                    <thead className="bg-gray-50 sticky top-0 z-20 shadow-sm">
                         <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Serial Number</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky left-0 z-20 bg-gray-50 border-r border-gray-100">Serial Number</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Asset Name</th>
                             <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Files</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
@@ -74,15 +75,15 @@ const AssetList = ({ assets, onEdit, onDelete }) => {
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Warranty Exp</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Calib.</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Next Calib.</th>
-                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider sticky right-0 z-20 bg-gray-50 border-l border-gray-100">Actions</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-100">
+                    <tbody className="divide-y divide-gray-100 bg-white">
                         {filteredAssets.map((asset) => {
                             const currentValue = calculateCurrentValue(asset);
                             return (
                                 <tr key={asset.id} className="hover:bg-gray-50 transition-colors">
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">{asset.asset_id || '-'}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono sticky left-0 bg-white hover:bg-gray-50 z-10 border-r border-gray-100">{asset.asset_id || '-'}</td>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="flex flex-col">
                                             <span className="text-sm font-medium text-gray-900">{asset.name}</span>
@@ -130,7 +131,7 @@ const AssetList = ({ assets, onEdit, onDelete }) => {
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                         {asset.next_calibration_date ? new Date(asset.next_calibration_date).toLocaleDateString() : '-'}
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium sticky right-0 bg-white hover:bg-gray-50 z-10 border-l border-gray-100">
                                         <div className="flex items-center justify-end gap-2">
                                             <button
                                                 onClick={() => handleOpenQR(asset)}
