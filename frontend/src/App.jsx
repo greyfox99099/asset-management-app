@@ -91,7 +91,7 @@ function Layout() {
                         <div className="bg-blue-600 p-2 rounded-lg">
                             <Package className="w-6 h-6 text-white" />
                         </div>
-                        <h1 className="text-xl font-bold tracking-tight">GIMS Assets</h1>
+                        <h1 className="text-xl font-bold tracking-tight">GIMS Assets Manager</h1>
                     </div>
                     {/* Close button for mobile */}
                     <button
@@ -182,7 +182,7 @@ function Layout() {
                         >
                             <Menu size={24} />
                         </button>
-                        <h1 className="text-lg font-bold">GIMS Assets</h1>
+                        <h1 className="text-lg font-bold">GIMS Assets Manager</h1>
                         <div className="w-10" /> {/* Spacer for centering */}
                     </div>
                 </header>
