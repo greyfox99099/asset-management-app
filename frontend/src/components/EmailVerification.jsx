@@ -8,6 +8,7 @@ const EmailVerification = () => {
     const navigate = useNavigate();
     const [status, setStatus] = useState('verifying'); // verifying, success, error
     const [message, setMessage] = useState('');
+    const [error, setError] = useState(null);
 
     useEffect(() => {
         const verifyEmail = async () => {
@@ -20,9 +21,11 @@ const EmailVerification = () => {
                 setTimeout(() => {
                     navigate('/login');
                 }, 3000);
-            } catch (error) {
+            } catch (err) {
+                console.error('Verification detailed error:', err);
                 setStatus('error');
-                setMessage(error.response?.data?.error || 'Verification failed. Please try again.');
+                setError(err); // Store full error object
+                setMessage(err.response?.data?.error || err.message || 'Verification failed');
             }
         };
 
@@ -65,10 +68,11 @@ const EmailVerification = () => {
                         <p className="text-red-700 font-semibold mb-4">{message}</p>
 
                         {/* Debug Info */}
-                        <div className="mb-4 p-3 bg-gray-100 rounded text-xs text-left overflow-auto max-w-full">
-                            <p className="font-bold text-gray-500 mb-1">Debug Info:</p>
-                            <p>Target: {API_BASE_URL}</p>
-                            <p>Token: {token?.substring(0, 10)}...</p>
+                        <div className="mb-4 p-3 bg-gray-100 rounded text-xs text-left overflow-auto max-w-full font-mono">
+                            <p className="font-bold text-gray-500 mb-1 border-b pb-1">Debug Info:</p>
+                            <p><span className="font-semibold">Target:</span> {API_BASE_URL}</p>
+                            <p><span className="font-semibold">Status:</span> {error?.response?.status || 'Network Error'}</p>
+                            <p><span className="font-semibold">Details:</span> {JSON.stringify(error?.response?.data || error?.message)}</p>
                         </div>
 
                         <Link
