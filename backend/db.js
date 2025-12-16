@@ -15,12 +15,24 @@ const db = new sqlite3.Database(dbPath, (err) => {
 
 const query = (sql, params = []) => {
   return new Promise((resolve, reject) => {
-    // Use db.all to support RETURNING clause and SELECT queries
+    // Use db.all to support SELECT queries and RETURNING
     db.all(sql, params, function (err, rows) {
       if (err) {
         return reject(err);
       }
       resolve({ rows: rows });
+    });
+  });
+};
+
+const run = (sql, params = []) => {
+  return new Promise((resolve, reject) => {
+    // Use db.run for INSERT/UPDATE/DELETE to get lastID and changes
+    db.run(sql, params, function (err) {
+      if (err) {
+        return reject(err);
+      }
+      resolve({ id: this.lastID, changes: this.changes });
     });
   });
 };
@@ -38,5 +50,6 @@ const initDB = () => {
 
 module.exports = {
   query,
+  run,
   initDB
 };
