@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import axios from 'axios';
+import { API_BASE_URL } from '../config';
 import { CheckCircle, XCircle, Package, Loader } from 'lucide-react';
 
 const EmailVerification = () => {
@@ -12,7 +12,7 @@ const EmailVerification = () => {
     useEffect(() => {
         const verifyEmail = async () => {
             try {
-                const response = await axios.get(`http://localhost:5001/api/auth/verify-email/${token}`);
+                const response = await axios.get(`${API_BASE_URL}/api/auth/verify-email/${token}`);
                 setStatus('success');
                 setMessage(response.data.message);
 
