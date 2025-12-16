@@ -102,6 +102,29 @@ const PublicAssetView = () => {
                     </div>
                 </div>
 
+                {/* Asset Information */}
+                <div className="bg-white shadow-xl p-6 mt-6">
+                    <h2 className="text-lg font-bold text-gray-900 mb-4 pb-3 border-b border-gray-200">
+                        Asset Details
+                    </h2>
+
+                    <div className="space-y-0">
+                        <InfoRow label="Serial Number" value={asset.asset_id} />
+                        <InfoRow label="Description" value={asset.description} />
+                        <InfoRow label="Category" value={asset.category} />
+                        <InfoRow label="Sub Category" value={asset.sub_category} />
+                        <InfoRow label="Quantity" value={asset.quantity ? `${asset.quantity} ${asset.unit || ''}`.trim() : null} />
+                        <InfoRow label="Location" value={asset.location} icon={MapPin} />
+                        <InfoRow label="Department" value={asset.department} />
+                        <InfoRow label="Purchase Date" value={asset.purchase_date} icon={Calendar} />
+                        <InfoRow label="Date of Use" value={asset.date_of_use} icon={Calendar} />
+                        <InfoRow label="Expected Life" value={asset.expected_life_years ? `${asset.expected_life_years} years` : null} />
+                        <InfoRow label="Last Calibrated" value={asset.last_calibrated_date} icon={Wrench} />
+                        <InfoRow label="Next Calibration" value={asset.next_calibration_date} icon={Wrench} />
+                        <InfoRow label="Warranty Expiry" value={asset.warranty_expiry_date} icon={Calendar} />
+                    </div>
+                </div>
+
                 {/* Attachments Section */}
                 <div className="bg-white rounded-b-2xl shadow-xl p-6 mt-6">
                     <h2 className="text-lg font-bold text-gray-900 mb-4 pb-3 border-b border-gray-200">
