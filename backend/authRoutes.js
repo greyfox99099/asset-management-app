@@ -266,52 +266,50 @@ router.get('/verify-email/:token', async (req, res) => {
 // Resend verification email
 router.post('/resend-verification',
     [
-        body('email').isEmail().withMessage('Please enter a valid email')
+        body('email').trim().notEmpty().withMessage('Username or Email is required')
     ],
     async (req, res) => {
         try {
             const errors = validationResult(req);
             if (!errors.isEmpty()) {
-                return res.status(400).json({ errors: errors.array() });
+                return res.status(400).json({ error: errors.array()[0].msg });
             }
 
-            const { email } = req.body;
+            const { email: identifier } = req.body;
 
-            // Find user
-            const result = await query(
-                'SELECT * FROM users WHERE email = ?',
-                [email]
-            );
+            // Find user by email OR username
+            const result = await query('SELECT * FROM users WHERE email = ? OR username = ?', [identifier, identifier]);
 
             if (result.rows.length === 0) {
-                // Don't reveal if email exists or not
-                return res.json({ message: 'If that email is registered, a verification email has been sent.' });
+                return res.json({ message: 'If that account exists, a verification email has been sent.' });
             }
 
             const user = result.rows[0];
 
-            // Check if already verified
             if (user.email_verified) {
                 return res.status(400).json({ error: 'Email is already verified' });
             }
 
-            // Generate new verification token
+            // Generate new token
             const verification_token = crypto.randomBytes(32).toString('hex');
-            const verification_token_expires = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
-            // Update token
+            // Update user
             await query(
-                'UPDATE users SET verification_token = ?, verification_token_expires = ? WHERE id = ?',
-                [verification_token, verification_token_expires.toISOString(), user.id]
+                'UPDATE users SET verification_token = ? WHERE id = ?',
+                [verification_token, user.id]
             );
 
             // Send verification email
-            await sendVerificationEmail(user.email, user.username, verification_token);
+            const emailResult = await sendVerificationEmail(user.email, user.username, verification_token);
+
+            if (!emailResult.success) {
+                throw new Error(emailResult.error || 'Failed to send email');
+            }
 
             res.json({ message: 'Verification email sent. Please check your inbox.' });
         } catch (error) {
             console.error('Resend verification error:', error);
-            res.status(500).json({ error: 'Server error' });
+            res.status(500).json({ error: 'Failed to send email. Please check server logs.' });
         }
     }
 );
