@@ -37,6 +37,147 @@ const insertAttachments = async (assetId, files) => {
     }
 };
 
+// IMPORT TEMPLATE
+router.get('/import-template', (req, res) => {
+    try {
+        const headers = [
+            'Serial Number', 'Asset Name', 'Description', 'Quantity', 'Unit',
+            'Location', 'Department', 'Category', 'Sub Category',
+            'Purchase Price', 'Purchase Date (YYYY-MM-DD)', 'Date of Use (YYYY-MM-DD)', 'Status',
+            'Expected Life (Years)', 'Warranty Expiry (YYYY-MM-DD)'
+        ];
+
+        // Sample data row to guide user
+        const sampleData = [
+            'SN-001', 'Sample Laptop', 'Dell Latitude', 1, 'Unit',
+            'Office 1', 'IT', 'Electronics', 'Computer',
+            15000000, '2024-01-01', '2024-01-02', 'In Use',
+            5, '2025-01-01'
+        ];
+
+        const wb = xlsx.utils.book_new();
+        const ws = xlsx.utils.aoa_to_sheet([headers, sampleData]);
+
+        // Adjust column widths
+        const wscols = headers.map(() => ({ wch: 20 }));
+        ws['!cols'] = wscols;
+
+        xlsx.utils.book_append_sheet(wb, ws, 'Template');
+
+        const buf = xlsx.write(wb, { type: 'buffer', bookType: 'xlsx' });
+
+        res.setHeader('Content-Disposition', 'attachment; filename="Asset_Import_Template.xlsx"');
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.send(buf);
+    } catch (err) {
+        console.error('Error generating template:', err);
+        res.status(500).send('Server Error');
+    }
+});
+
+// IMPORT ASSETS
+// Using upload.single('file') to accept one excel file
+router.post('/import', upload.single('file'), async (req, res) => {
+    if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    try {
+        const workbook = xlsx.readFile(req.file.path);
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        const data = xlsx.utils.sheet_to_json(sheet);
+
+        let successCount = 0;
+        let errors = [];
+
+        // Helper to parse date from Excel serial or string
+        const parseDate = (val) => {
+            if (!val) return null;
+            if (typeof val === 'number') {
+                // Excel serial date
+                const date = new Date(Math.round((val - 25569) * 86400 * 1000));
+                return date.toISOString().split('T')[0];
+            }
+            // String YYYY-MM-DD
+            return val;
+        };
+
+        for (const [index, row] of data.entries()) {
+            const rowNum = index + 2; // +2 because header is 1-based and index 0 is row 2
+
+            // Map columns (Flexible matching)
+            const name = row['Asset Name'];
+
+            if (!name) {
+                errors.push(`Row ${rowNum}: Asset Name is required`);
+                continue;
+            }
+
+            // Extract values
+            const asset_id = row['Serial Number'] || null;
+            const description = row['Description'] || null;
+            const quantity = parseInt(row['Quantity']) || 1;
+            const unit = row['Unit'] || 'Pcs';
+            const location = row['Location'] || null;
+            const department = row['Department'] || null;
+            const category = row['Category'] || null;
+            const sub_category = row['Sub Category'] || null;
+            const purchase_price = parseFloat(row['Purchase Price']) || 0;
+            const purchase_date = parseDate(row['Purchase Date (YYYY-MM-DD)']);
+            const date_of_use = parseDate(row['Date of Use (YYYY-MM-DD)']);
+            const status = row['Status'] || 'In Storage';
+            const expected_life_years = parseFloat(row['Expected Life (Years)']) || 0;
+            const warranty_expiry_date = parseDate(row['Warranty Expiry (YYYY-MM-DD)']);
+
+            // Calculate depreciation if possible
+            let depreciation_annual = 0;
+            let depreciation_monthly = 0;
+            if (purchase_price > 0 && expected_life_years > 0) {
+                depreciation_annual = (purchase_price / expected_life_years).toFixed(2);
+                depreciation_monthly = (depreciation_annual / 12).toFixed(2);
+            }
+
+            try {
+                await pool.run(
+                    `INSERT INTO assets (
+                        asset_id, name, description, quantity, unit, location, department, 
+                        category, sub_category, purchase_date, date_of_use, status, 
+                        purchase_price, expected_life_years, depreciation_annual, 
+                        depreciation_monthly, warranty_expiry_date
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                    [
+                        asset_id, name, description, quantity, unit, location, department,
+                        category, sub_category, purchase_date, date_of_use, status,
+                        purchase_price, expected_life_years, depreciation_annual,
+                        depreciation_monthly, warranty_expiry_date
+                    ]
+                );
+                successCount++;
+            } catch (dbErr) {
+                console.error(`Row ${rowNum} Insert Error:`, dbErr);
+                errors.push(`Row ${rowNum}: Database error (${dbErr.message})`);
+            }
+        }
+
+        // Clean up file
+        if (fs.existsSync(req.file.path)) {
+            fs.unlinkSync(req.file.path);
+        }
+
+        res.json({
+            success: true,
+            imported: successCount,
+            total: data.length,
+            errors: errors
+        });
+
+    } catch (err) {
+        console.error('Import Error:', err);
+        res.status(500).json({ error: 'Failed to process import file' });
+    }
+});
+
 // GET all assets (with attachment count)
 router.get('/', async (req, res) => {
     try {
