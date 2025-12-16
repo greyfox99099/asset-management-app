@@ -72,11 +72,29 @@ const AssetForm = ({ asset, onClose, onSubmit }) => {
 
     const handleChange = (e) => {
         const { name, value, files } = e.target;
+
+        let newFormData = { ...formData };
+
         if (files) {
-            setFormData(prev => ({ ...prev, [name]: files[0] }));
+            newFormData[name] = files[0];
         } else {
-            setFormData(prev => ({ ...prev, [name]: value }));
+            newFormData[name] = value;
         }
+
+        // Auto-calculate depreciation
+        if (name === 'purchase_price' || name === 'expected_life_years') {
+            const price = parseFloat(name === 'purchase_price' ? value : formData.purchase_price);
+            const years = parseFloat(name === 'expected_life_years' ? value : formData.expected_life_years);
+
+            if (price && years && years > 0) {
+                const annual = price / years;
+                const monthly = annual / 12;
+                newFormData.depreciation_annual = annual.toFixed(2);
+                newFormData.depreciation_monthly = monthly.toFixed(2);
+            }
+        }
+
+        setFormData(newFormData);
     };
 
     const handleSubmit = async (e) => {
