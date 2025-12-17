@@ -7,21 +7,33 @@ let transporter = null;
 const createTransporter = async () => {
     if (transporter) return transporter;
 
-    // For development: create a test account
-    const testAccount = await nodemailer.createTestAccount();
+    const emailHost = (process.env.EMAIL_HOST || 'smtp.ethereal.email').trim();
+    const emailPort = (process.env.EMAIL_PORT || '587').trim();
+    const emailUser = (process.env.EMAIL_USER || testAccount?.user || '').trim();
+    const emailPass = (process.env.EMAIL_PASS || testAccount?.pass || '').trim();
 
-    const port = process.env.EMAIL_PORT || 587;
-    const isSecure = port == 465;
+    const isSecure = emailPort == '465';
+
+    console.log(`Configuring Email Transporter: Host=${emailHost} Port=${emailPort} Secure=${isSecure} User=${emailUser ? '***' : 'None'}`);
 
     transporter = nodemailer.createTransport({
-        host: process.env.EMAIL_HOST || 'smtp.ethereal.email',
-        port: port,
+        host: emailHost,
+        port: parseInt(emailPort),
         secure: isSecure, // true for 465, false for other ports
         auth: {
-            user: process.env.EMAIL_USER || testAccount.user,
-            pass: process.env.EMAIL_PASS || testAccount.pass,
+            user: emailUser,
+            pass: emailPass,
         },
+        connectionTimeout: 10000, // 10 seconds
     });
+
+    // Verify connection configuration
+    try {
+        await transporter.verify();
+        console.log('SMTP connection verified successfully');
+    } catch (err) {
+        console.error('SMTP connection check failed:', err.message);
+    }
 
     console.log('Email transporter created');
     if (!process.env.EMAIL_USER) {
