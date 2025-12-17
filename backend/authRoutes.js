@@ -185,7 +185,7 @@ router.post('/login',
             });
         } catch (error) {
             console.error('Login error:', error);
-            res.status(500).json({ error: 'Server error' });
+            res.status(500).json({ error: 'Server error: ' + error.message });
         }
     }
 );
