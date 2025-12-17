@@ -43,12 +43,13 @@ app.use(helmet({
 }));
 
 // 2. CORS - Allow both localhost and network IP
+const getBaseUrl = (url) => url ? url.replace(/\/$/, '') : '';
 const allowedOrigins = [
     'http://localhost:5173',
     'http://localhost:5174',
     'http://192.168.18.32:5173',
     'http://192.168.18.32:5174',
-    process.env.FRONTEND_URL
+    getBaseUrl(process.env.FRONTEND_URL)
 ].filter(Boolean);
 
 // CORS Configuration
@@ -57,10 +58,15 @@ const corsOptions = {
         // Allow requests with no origin (like mobile apps or curl requests)
         if (!origin) return callback(null, true);
 
+        // Allow Vercel Deployments (Preview & Production)
+        if (origin.endsWith('.vercel.app')) {
+            return callback(null, true);
+        }
+
         if (allowedOrigins.indexOf(origin) !== -1) {
             callback(null, true);
         } else {
-            console.log('CORS blocked origin:', origin);
+            console.error('CORS blocked origin:', origin); // Changed to console.error for visibility
             callback(new Error('Not allowed by CORS'));
         }
     },
