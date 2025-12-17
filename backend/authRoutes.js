@@ -44,10 +44,10 @@ router.post('/register',
             const verification_token = crypto.randomBytes(32).toString('hex');
             const verification_token_expires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
-            // Create user
+            // Create user (Auto-verify for now to bypass email issues)
             const result = await query(
-                'INSERT INTO users (username, email, password_hash, verification_token, verification_token_expires) VALUES ($1, $2, $3, $4, $5) RETURNING id',
-                [username, email, password_hash, verification_token, verification_token_expires.toISOString()]
+                'INSERT INTO users (username, email, password_hash, verification_token, verification_token_expires, email_verified) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id',
+                [username, email, password_hash, verification_token, verification_token_expires.toISOString(), true]
             );
 
             // Send verification email
@@ -121,12 +121,13 @@ router.post('/login',
             }
 
             // Check if email is verified
-            if (!user.email_verified) {
-                return res.status(403).json({
-                    error: 'Please verify your email before logging in',
-                    emailNotVerified: true
-                });
-            }
+            // BYPASS: Temporarily disabled due to email server issues
+            // if (!user.email_verified) {
+            //     return res.status(403).json({
+            //         error: 'Please verify your email before logging in',
+            //         emailNotVerified: true
+            //     });
+            // }
 
             // Check password
             const isMatch = await bcrypt.compare(password, user.password_hash);
