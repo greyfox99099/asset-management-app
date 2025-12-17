@@ -10,10 +10,13 @@ const createTransporter = async () => {
     // For development: create a test account
     const testAccount = await nodemailer.createTestAccount();
 
+    const port = process.env.EMAIL_PORT || 587;
+    const isSecure = port == 465;
+
     transporter = nodemailer.createTransport({
         host: process.env.EMAIL_HOST || 'smtp.ethereal.email',
-        port: process.env.EMAIL_PORT || 587,
-        secure: false,
+        port: port,
+        secure: isSecure, // true for 465, false for other ports
         auth: {
             user: process.env.EMAIL_USER || testAccount.user,
             pass: process.env.EMAIL_PASS || testAccount.pass,
