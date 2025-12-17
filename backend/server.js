@@ -206,10 +206,24 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log(`Local: http://localhost:${PORT}`);
     console.log(`Network: http://192.168.18.32:${PORT}`);
 
-    // Start self-ping every 3 minutes (180000ms)
-    // Replit usually sleeps after 5-10 mins of inactivity
-    if (process.env.REPL_SLUG) {
-        setInterval(keepAlive, 3 * 60 * 1000);
-        console.log('Self-Ping interval started for Replit environment.');
+    // Start self-ping every 5 minutes (300000ms)
+    // Prevents Render Free Tier from sleeping
+    if (process.env.REPL_SLUG || process.env.RENDER) {
+        // Use Render URL if available, else Replit functionality
+        if (!process.env.REPL_SLUG && process.env.RENDER_EXTERNAL_URL) {
+            console.log('Self-Ping configured for Render.');
+            setInterval(() => {
+                const https = require('https');
+                https.get(process.env.RENDER_EXTERNAL_URL, (res) => {
+                    console.log(`Keep-Alive Ping: ${res.statusCode} at ${new Date().toISOString()}`);
+                }).on('error', (err) => {
+                    console.error('Keep-Alive Error:', err.message);
+                });
+            }, 5 * 60 * 1000); // 5 minutes
+        } else if (process.env.REPL_SLUG) {
+            // Replit Legacy Logic
+            setInterval(keepAlive, 3 * 60 * 1000);
+            console.log('Self-Ping interval started for Replit environment.');
+        }
     }
 });
