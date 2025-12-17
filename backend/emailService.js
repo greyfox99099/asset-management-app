@@ -14,17 +14,14 @@ const createTransporter = async () => {
 
     const isSecure = emailPort == '465';
 
-    console.log(`Configuring Email Transporter: Host=${emailHost} Port=${emailPort} Secure=${isSecure} User=${emailUser ? '***' : 'None'}`);
+    console.log(`Configuring Email Transporter: Service=Gmail User=${emailUser ? '***' : 'None'}`);
 
     transporter = nodemailer.createTransport({
-        host: emailHost,
-        port: parseInt(emailPort),
-        secure: isSecure, // true for 465, false for other ports
+        service: 'gmail', // Built-in shorthand for Gmail (handles host/port/secure auto)
         auth: {
             user: emailUser,
             pass: emailPass,
         },
-        connectionTimeout: 10000, // 10 seconds
     });
 
     // Verify connection configuration
