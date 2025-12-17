@@ -241,11 +241,20 @@ router.post('/', upload.array('attachments'), async (req, res) => {
                 warranty_expiry_date
             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19) RETURNING id`,
             [
-                asset_id, name, description, quantity, unit, location, department,
-                category, sub_category, purchase_date, date_of_use, status,
-                purchase_price, expected_life_years, depreciation_annual,
-                depreciation_monthly, last_calibrated_date, next_calibration_date,
-                warranty_expiry_date
+                asset_id, name, description,
+                parseInt(quantity) || 1,
+                unit, location, department,
+                category, sub_category,
+                toNull(purchase_date),
+                toNull(date_of_use),
+                status,
+                parseFloat(purchase_price) || 0,
+                parseFloat(expected_life_years) || 0,
+                parseFloat(depreciation_annual) || 0,
+                parseFloat(depreciation_monthly) || 0,
+                toNull(last_calibrated_date),
+                toNull(next_calibration_date),
+                toNull(warranty_expiry_date)
             ]
         );
 
@@ -289,12 +298,23 @@ router.put('/:id', upload.array('attachments'), async (req, res) => {
                 depreciation_annual = $15, depreciation_monthly = $16, last_calibrated_date = $17, 
                 next_calibration_date = $18, warranty_expiry_date = $19
             WHERE id = $20 RETURNING id`,
+            WHERE id = $20 RETURNING id`,
             [
-                asset_id, name, description, quantity, unit, location, department,
-                category, sub_category, purchase_date, date_of_use, status,
-                purchase_price, expected_life_years, depreciation_annual,
-                depreciation_monthly, last_calibrated_date, next_calibration_date,
-                warranty_expiry_date, id
+                asset_id, name, description, 
+                parseInt(quantity) || 0, 
+                unit, location, department,
+                category, sub_category, 
+                toNull(purchase_date), 
+                toNull(date_of_use), 
+                status,
+                parseFloat(purchase_price) || 0, 
+                parseFloat(expected_life_years) || 0, 
+                parseFloat(depreciation_annual) || 0, 
+                parseFloat(depreciation_monthly) || 0, 
+                toNull(last_calibrated_date), 
+                toNull(next_calibration_date),
+                toNull(warranty_expiry_date), 
+                id
             ]
         );
 
@@ -318,9 +338,12 @@ router.put('/:id', upload.array('attachments'), async (req, res) => {
     } catch (err) {
         console.error('Error updating asset:', err);
         console.error('Stack:', err.stack);
-        res.status(500).send('Server Error: ' + err.message);
+        res.status(500).json({ error: 'Server Error: ' + err.message });
     }
 });
+
+// Helper to sanitize inputs (Postgres doesn't like empty strings for dates/numbers)
+const toNull = (val) => (val === '' || val === 'null' || val === undefined ? null : val);
 
 // DELETE asset
 router.delete('/:id', async (req, res) => {
@@ -439,7 +462,7 @@ router.post('/import', upload.single('file'), async (req, res) => {
             const name = row['Asset Name'];
 
             if (!name) {
-                errors.push(`Row ${rowNum}: Asset Name is required`);
+                errors.push(`Row ${ rowNum }: Asset Name is required`);
                 continue;
             }
 
@@ -469,12 +492,12 @@ router.post('/import', upload.single('file'), async (req, res) => {
 
             try {
                 await pool.run(
-                    `INSERT INTO assets (
-                        asset_id, name, description, quantity, unit, location, department, 
-                        category, sub_category, purchase_date, date_of_use, status, 
-                        purchase_price, expected_life_years, depreciation_annual, 
-                        depreciation_monthly, warranty_expiry_date
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                    `INSERT INTO assets(
+                asset_id, name, description, quantity, unit, location, department,
+                category, sub_category, purchase_date, date_of_use, status,
+                purchase_price, expected_life_years, depreciation_annual,
+                depreciation_monthly, warranty_expiry_date
+            ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                     [
                         asset_id, name, description, quantity, unit, location, department,
                         category, sub_category, purchase_date, date_of_use, status,
@@ -484,8 +507,8 @@ router.post('/import', upload.single('file'), async (req, res) => {
                 );
                 successCount++;
             } catch (dbErr) {
-                console.error(`Row ${rowNum} Insert Error:`, dbErr);
-                errors.push(`Row ${rowNum}: Database error (${dbErr.message})`);
+                console.error(`Row ${ rowNum } Insert Error: `, dbErr);
+                errors.push(`Row ${ rowNum }: Database error(${ dbErr.message })`);
             }
         }
 
