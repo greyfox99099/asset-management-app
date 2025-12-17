@@ -21,7 +21,12 @@ app.get('/', (req, res) => {
     // Prevent caching
     res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
     console.log(`Ping Received at ${new Date().toISOString()}`);
-    res.status(200).send('Server is running.');
+    res.status(200).send(`
+        <h1>Server is Running</h1>
+        <p>Status: Live</p>
+        <p>Time: ${new Date().toISOString()}</p>
+        <p>Services: API, Auth, Database Connected</p>
+    `);
 });
 
 // Trust proxy (required for Replit/Render/Vercel)
