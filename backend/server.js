@@ -143,7 +143,7 @@ app.use('/api/assets', authMiddleware, assetRoutes); // Mount at /api/assets
 app.get('/api/public/assets/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const result = await pool.query('SELECT * FROM assets WHERE id = ?', [id]);
+        const result = await pool.query('SELECT * FROM assets WHERE id = $1', [id]);
         if (result.rows.length === 0) {
             return res.status(404).json({ error: 'Asset not found' });
         }
@@ -152,7 +152,7 @@ app.get('/api/public/assets/:id', async (req, res) => {
         const asset = result.rows[0];
 
         // Fetch attachments for public view too (optional, but good for completeness)
-        const attachments = await pool.query('SELECT * FROM asset_attachments WHERE asset_id = ?', [id]);
+        const attachments = await pool.query('SELECT * FROM asset_attachments WHERE asset_id = $1', [id]);
 
         const publicData = {
             ...asset,

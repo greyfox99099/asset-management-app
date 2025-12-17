@@ -1,55 +1,54 @@
-const sqlite3 = require('sqlite3').verbose();
-const path = require('path');
+const { Pool } = require('pg');
+require('dotenv').config();
 
-const dbPath = path.resolve(__dirname, 'asset_management.db');
-
-const db = new sqlite3.Database(dbPath, (err) => {
-  if (err) {
-    console.error('Could not connect to database', err);
-  } else {
-    console.log('Connected to SQLite database at ' + dbPath);
-    // Enable foreign keys
-    db.run('PRAGMA foreign_keys = ON');
+// SSL is required for Neon (and most cloud providers)
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false // Required for some hosts, though CA check is better in strict prod
   }
 });
 
-const query = (sql, params = []) => {
-  return new Promise((resolve, reject) => {
-    // Use db.all to support SELECT queries and RETURNING
-    db.all(sql, params, function (err, rows) {
-      if (err) {
-        return reject(err);
-      }
-      resolve({ rows: rows });
-    });
-  });
+pool.on('connect', () => {
+  console.log('Connected to PostgreSQL database');
+});
+
+pool.on('error', (err) => {
+  console.error('Unexpected error on idle client', err);
+  process.exit(-1);
+});
+
+// Wrapper to standardise async queries (matches our previous API mostly)
+const query = async (text, params) => {
+  const start = Date.now();
+  const res = await pool.query(text, params);
+  const duration = Date.now() - start;
+  // console.log('executed query', { text, duration, rows: res.rowCount });
+  return res;
 };
 
-const run = (sql, params = []) => {
-  return new Promise((resolve, reject) => {
-    // Use db.run for INSERT/UPDATE/DELETE to get lastID and changes
-    db.run(sql, params, function (err) {
-      if (err) {
-        return reject(err);
-      }
-      resolve({ id: this.lastID, changes: this.changes });
-    });
-  });
+// Polyfill for 'run' to ease migration, but throwing error to force refactor
+// SQLite 'run' returned { id, changes }. Postgres returns rows.
+// We should update call sites to use RETURNING id.
+const run = async () => {
+  throw new Error('pool.run() is deprecated in Postgres migration. Use pool.query() with RETURNING clause.');
 };
 
-const initDB = () => {
-  return new Promise((resolve, reject) => {
-    // SQLite creates the file automatically, but we can check connection
-    if (db) {
-      resolve();
-    } else {
-      reject(new Error('Database not initialized'));
-    }
-  });
+// Init DB not needed for connection, but could run schema
+const initDB = async () => {
+  try {
+    // Optional: Check connection
+    await pool.query('SELECT 1');
+    console.log('Database connection verified');
+  } catch (err) {
+    console.error('Database connection failed:', err);
+    throw err;
+  }
 };
 
 module.exports = {
   query,
-  run,
-  initDB
+  run, // Exporting dummy to catch legacy usage errors
+  initDB,
+  pool // Export raw pool if needed
 };

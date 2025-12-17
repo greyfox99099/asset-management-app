@@ -27,7 +27,7 @@ router.delete('/:id', isAdmin, async (req, res) => {
             return res.status(400).json({ error: 'Cannot delete your own account' });
         }
 
-        await query('DELETE FROM users WHERE id = ?', [id]);
+        await query('DELETE FROM users WHERE id = $1', [id]);
         res.json({ message: 'User deleted successfully' });
     } catch (error) {
         console.error('Delete user error:', error);
@@ -50,7 +50,7 @@ router.put('/:id/role', isAdmin, async (req, res) => {
             return res.status(400).json({ error: 'Cannot change your own role' });
         }
 
-        await query('UPDATE users SET role = ? WHERE id = ?', [role, id]);
+        await query('UPDATE users SET role = $1 WHERE id = $2', [role, id]);
         res.json({ message: 'User role updated successfully' });
     } catch (error) {
         console.error('Update role error:', error);

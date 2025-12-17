@@ -28,7 +28,7 @@ router.post('/register',
 
             // Check if user exists
             const existingUser = await query(
-                'SELECT * FROM users WHERE username = ? OR email = ?',
+                'SELECT * FROM users WHERE username = $1 OR email = $2',
                 [username, email]
             );
 
@@ -46,7 +46,7 @@ router.post('/register',
 
             // Create user
             const result = await query(
-                'INSERT INTO users (username, email, password_hash, verification_token, verification_token_expires) VALUES (?, ?, ?, ?, ?)',
+                'INSERT INTO users (username, email, password_hash, verification_token, verification_token_expires) VALUES ($1, $2, $3, $4, $5) RETURNING id',
                 [username, email, password_hash, verification_token, verification_token_expires.toISOString()]
             );
 
@@ -89,7 +89,7 @@ router.post('/login',
 
             // Find user
             const result = await query(
-                'SELECT * FROM users WHERE username = ? OR email = ?',
+                'SELECT * FROM users WHERE username = $1 OR email = $2',
                 [username, username]
             );
 
@@ -114,7 +114,7 @@ router.post('/login',
                 } else {
                     // Lock expired, reset
                     await query(
-                        'UPDATE users SET failed_login_attempts = 0, locked_until = NULL WHERE id = ?',
+                        'UPDATE users SET failed_login_attempts = 0, locked_until = NULL WHERE id = $1',
                         [user.id]
                     );
                 }
@@ -138,7 +138,7 @@ router.post('/login',
                     // Lock account for 15 minutes
                     const lockUntil = new Date(Date.now() + 15 * 60 * 1000);
                     await query(
-                        'UPDATE users SET failed_login_attempts = ?, locked_until = ? WHERE id = ?',
+                        'UPDATE users SET failed_login_attempts = $1, locked_until = $2 WHERE id = $3',
                         [newAttempts, lockUntil.toISOString(), user.id]
                     );
 
@@ -150,7 +150,7 @@ router.post('/login',
                 } else {
                     // Update failed attempts
                     await query(
-                        'UPDATE users SET failed_login_attempts = ? WHERE id = ?',
+                        'UPDATE users SET failed_login_attempts = $1 WHERE id = $2',
                         [newAttempts, user.id]
                     );
 
@@ -163,7 +163,7 @@ router.post('/login',
 
             // Successful login - reset failed attempts
             await query(
-                'UPDATE users SET failed_login_attempts = 0, locked_until = NULL WHERE id = ?',
+                'UPDATE users SET failed_login_attempts = 0, locked_until = NULL WHERE id = $1',
                 [user.id]
             );
 
@@ -202,7 +202,7 @@ router.get('/me', async (req, res) => {
         const decoded = jwt.verify(token, JWT_SECRET);
 
         const result = await query(
-            'SELECT id, username, email, role, created_at FROM users WHERE id = ?',
+            'SELECT id, username, email, role, created_at FROM users WHERE id = $1',
             [decoded.id]
         );
 
@@ -225,7 +225,7 @@ router.get('/verify-email/:token', async (req, res) => {
 
         // Find user with this token
         // Debug: Check if any user has this token
-        const debugCheck = await query('SELECT username, verification_token FROM users WHERE verification_token = ?', [token]);
+        const debugCheck = await query('SELECT username, verification_token FROM users WHERE verification_token = $1', [token]);
         if (debugCheck.rows.length > 0) {
             console.log('Match found for user:', debugCheck.rows[0].username);
         } else {
@@ -233,7 +233,7 @@ router.get('/verify-email/:token', async (req, res) => {
         }
 
         const result = await query(
-            'SELECT * FROM users WHERE verification_token = ?',
+            'SELECT * FROM users WHERE verification_token = $1',
             [token]
         );
 
@@ -259,7 +259,7 @@ router.get('/verify-email/:token', async (req, res) => {
 
         // Update user as verified
         await query(
-            'UPDATE users SET email_verified = 1, verification_token = NULL, verification_token_expires = NULL WHERE id = ?',
+            'UPDATE users SET email_verified = true, verification_token = NULL, verification_token_expires = NULL WHERE id = $1',
             [user.id]
         );
 
@@ -288,7 +288,7 @@ router.post('/resend-verification',
             const { email: identifier } = req.body;
 
             // Find user by email OR username
-            const result = await query('SELECT * FROM users WHERE email = ? OR username = ?', [identifier, identifier]);
+            const result = await query('SELECT * FROM users WHERE email = $1 OR username = $2', [identifier, identifier]);
 
             if (result.rows.length === 0) {
                 return res.json({ message: 'If that account exists, a verification email has been sent.' });
@@ -305,7 +305,7 @@ router.post('/resend-verification',
 
             // Update user
             await query(
-                'UPDATE users SET verification_token = ? WHERE id = ?',
+                'UPDATE users SET verification_token = $1 WHERE id = $2',
                 [verification_token, user.id]
             );
 
@@ -331,7 +331,7 @@ router.get('/dev/verification-link/:email', async (req, res) => {
         const { email } = req.params;
 
         const result = await query(
-            'SELECT username, verification_token FROM users WHERE email = ?',
+            'SELECT username, verification_token FROM users WHERE email = $1',
             [email]
         );
 

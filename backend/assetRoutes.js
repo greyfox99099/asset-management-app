@@ -29,7 +29,7 @@ const upload = multer({
 const insertAttachments = async (assetId, files) => {
     if (!files || files.length === 0) return;
 
-    const query = `INSERT INTO asset_attachments (asset_id, file_url, file_name, file_type) VALUES (?, ?, ?, ?)`;
+    const query = `INSERT INTO asset_attachments (asset_id, file_url, file_name, file_type) VALUES ($1, $2, $3, $4)`;
 
     for (const file of files) {
         const fileUrl = `/uploads/${file.filename}`;
@@ -37,7 +37,7 @@ const insertAttachments = async (assetId, files) => {
     }
 };
 
-// IMPORT TEMPLATE
+// IMPORT TEMPLATE (unchanged logic)
 router.get('/import-template', (req, res) => {
     try {
         const headers = [
@@ -139,13 +139,13 @@ router.post('/import', upload.single('file'), async (req, res) => {
             }
 
             try {
-                await pool.run(
+                await pool.query(
                     `INSERT INTO assets (
                         asset_id, name, description, quantity, unit, location, department, 
                         category, sub_category, purchase_date, date_of_use, status, 
                         purchase_price, expected_life_years, depreciation_annual, 
                         depreciation_monthly, warranty_expiry_date
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)`,
                     [
                         asset_id, name, description, quantity, unit, location, department,
                         category, sub_category, purchase_date, date_of_use, status,
@@ -200,14 +200,14 @@ router.get('/:id', async (req, res) => {
         const { id } = req.params;
 
         // Get asset details
-        const assetResult = await pool.query('SELECT * FROM assets WHERE id = ?', [id]);
+        const assetResult = await pool.query('SELECT * FROM assets WHERE id = $1', [id]);
         if (assetResult.rows.length === 0) {
             return res.status(404).json({ msg: 'Asset not found' });
         }
         const asset = assetResult.rows[0];
 
         // Get attachments
-        const attachmentsResult = await pool.query('SELECT * FROM asset_attachments WHERE asset_id = ?', [id]);
+        const attachmentsResult = await pool.query('SELECT * FROM asset_attachments WHERE asset_id = $1', [id]);
         asset.attachments = attachmentsResult.rows;
 
         res.json(asset);
@@ -232,14 +232,14 @@ router.post('/', upload.array('attachments'), async (req, res) => {
             warranty_expiry_date
         } = req.body;
 
-        const result = await pool.run(
+        const result = await pool.query(
             `INSERT INTO assets (
                 asset_id, name, description, quantity, unit, location, department, 
                 category, sub_category, purchase_date, date_of_use, status, 
                 purchase_price, expected_life_years, depreciation_annual, 
                 depreciation_monthly, last_calibrated_date, next_calibration_date, 
                 warranty_expiry_date
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19) RETURNING id`,
             [
                 asset_id, name, description, quantity, unit, location, department,
                 category, sub_category, purchase_date, date_of_use, status,
@@ -249,14 +249,14 @@ router.post('/', upload.array('attachments'), async (req, res) => {
             ]
         );
 
-        const assetId = result.id;
+        const assetId = result.rows[0].id;
 
         // Handle attachments
         if (req.files) {
             await insertAttachments(assetId, req.files);
         }
 
-        const newAsset = await pool.query('SELECT * FROM assets WHERE id = ?', [assetId]);
+        const newAsset = await pool.query('SELECT * FROM assets WHERE id = $1', [assetId]);
         console.log('Asset created successfully:', newAsset.rows[0]);
         res.json(newAsset.rows[0]);
     } catch (err) {
@@ -281,14 +281,14 @@ router.put('/:id', upload.array('attachments'), async (req, res) => {
             warranty_expiry_date
         } = req.body;
 
-        const result = await pool.run(
+        const result = await pool.query(
             `UPDATE assets SET 
-                asset_id = ?, name = ?, description = ?, quantity = ?, unit = ?, location = ?, 
-                department = ?, category = ?, sub_category = ?, purchase_date = ?, 
-                date_of_use = ?, status = ?, purchase_price = ?, expected_life_years = ?, 
-                depreciation_annual = ?, depreciation_monthly = ?, last_calibrated_date = ?, 
-                next_calibration_date = ?, warranty_expiry_date = ?
-            WHERE id = ?`,
+                asset_id = $1, name = $2, description = $3, quantity = $4, unit = $5, location = $6, 
+                department = $7, category = $8, sub_category = $9, purchase_date = $10, 
+                date_of_use = $11, status = $12, purchase_price = $13, expected_life_years = $14, 
+                depreciation_annual = $15, depreciation_monthly = $16, last_calibrated_date = $17, 
+                next_calibration_date = $18, warranty_expiry_date = $19
+            WHERE id = $20 RETURNING id`,
             [
                 asset_id, name, description, quantity, unit, location, department,
                 category, sub_category, purchase_date, date_of_use, status,
@@ -298,7 +298,7 @@ router.put('/:id', upload.array('attachments'), async (req, res) => {
             ]
         );
 
-        if (result.changes === 0) {
+        if (result.rowCount === 0) {
             return res.status(404).json({ msg: 'Asset not found' });
         }
 
@@ -307,10 +307,10 @@ router.put('/:id', upload.array('attachments'), async (req, res) => {
             await insertAttachments(id, req.files);
         }
 
-        const updatedAssetResult = await pool.query('SELECT * FROM assets WHERE id = ?', [id]);
+        const updatedAssetResult = await pool.query('SELECT * FROM assets WHERE id = $1', [id]);
         const updatedAsset = updatedAssetResult.rows[0];
         // Fetch attachments to include in response
-        const attachmentsResult = await pool.query('SELECT * FROM asset_attachments WHERE asset_id = ?', [id]);
+        const attachmentsResult = await pool.query('SELECT * FROM asset_attachments WHERE asset_id = $1', [id]);
         updatedAsset.attachments = attachmentsResult.rows;
 
         console.log('Asset updated successfully');
@@ -326,8 +326,8 @@ router.put('/:id', upload.array('attachments'), async (req, res) => {
 router.delete('/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const result = await pool.query('DELETE FROM assets WHERE id = ? RETURNING *', [id]);
-        if (result.rows.length === 0) {
+        const result = await pool.query('DELETE FROM assets WHERE id = $1 RETURNING id', [id]);
+        if (result.rowCount === 0) {
             return res.status(404).json({ msg: 'Asset not found' });
         }
         res.json({ msg: 'Asset deleted' });
@@ -343,7 +343,7 @@ router.delete('/attachments/:attachmentId', async (req, res) => {
         const { attachmentId } = req.params;
 
         // Get file info first to delete from disk
-        const fileResult = await pool.query('SELECT * FROM asset_attachments WHERE id = ?', [attachmentId]);
+        const fileResult = await pool.query('SELECT * FROM asset_attachments WHERE id = $1', [attachmentId]);
         if (fileResult.rows.length === 0) {
             return res.status(404).json({ msg: 'Attachment not found' });
         }
@@ -352,7 +352,7 @@ router.delete('/attachments/:attachmentId', async (req, res) => {
         const filePath = path.join(__dirname, '..', fileData.file_url);
 
         // Delete from DB
-        await pool.query('DELETE FROM asset_attachments WHERE id = ?', [attachmentId]);
+        await pool.query('DELETE FROM asset_attachments WHERE id = $1', [attachmentId]);
 
         // Delete from Disk (if exists)
         if (fs.existsSync(filePath)) {
