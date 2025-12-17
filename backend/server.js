@@ -15,6 +15,15 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 5001;
 
+// Keep-Alive Endpoint for Replit (Top Priority)
+// Bypasses all middleware to ensure instant response during wake-up
+app.get('/', (req, res) => {
+    // Prevent caching
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    console.log(`Ping Received at ${new Date().toISOString()}`);
+    res.status(200).send('Server is running.');
+});
+
 // Trust proxy (required for Replit/Render/Vercel)
 app.set('trust proxy', 1);
 
@@ -158,14 +167,7 @@ app.get('/api/public/assets/:id', async (req, res) => {
     }
 });
 
-// Keep-Alive Endpoint for Replit
-app.get('/', (req, res) => {
-    // Prevent caching
-    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
-    // Simple 200 OK to satisfy uptime monitors instantly.
-    // We do NOT query the DB here to avoid timeouts during cold starts.
-    res.status(200).send('Server is running.');
-});
+
 
 // Start server - Listen on all network interfaces for mobile access
 app.listen(PORT, '0.0.0.0', () => {
