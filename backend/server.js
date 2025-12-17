@@ -169,9 +169,36 @@ app.get('/api/public/assets/:id', async (req, res) => {
 
 
 
+// Self-Ping Mechanism to prevent Replit sleep
+// This creates internal traffic every 3 minutes
+const http = require('http');
+const https = require('https');
+
+const keepAlive = () => {
+    // Construct the Replit URL dynamically
+    const replitUrl = process.env.REPL_SLUG && process.env.REPL_OWNER
+        ? `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co/`
+        : `http://localhost:${PORT}/`;
+
+    const protocol = replitUrl.startsWith('https') ? https : http;
+
+    protocol.get(replitUrl, (res) => {
+        console.log(`Self-Ping Status: ${res.statusCode} at ${new Date().toISOString()}`);
+    }).on('error', (err) => {
+        console.error('Self-Ping Error:', err.message);
+    });
+};
+
 // Start server - Listen on all network interfaces for mobile access
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on port ${PORT}`);
     console.log(`Local: http://localhost:${PORT}`);
     console.log(`Network: http://192.168.18.32:${PORT}`);
+
+    // Start self-ping every 3 minutes (180000ms)
+    // Replit usually sleeps after 5-10 mins of inactivity
+    if (process.env.REPL_SLUG) {
+        setInterval(keepAlive, 3 * 60 * 1000);
+        console.log('Self-Ping interval started for Replit environment.');
+    }
 });
