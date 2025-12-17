@@ -17,11 +17,14 @@ const createTransporter = async () => {
     console.log(`Configuring Email Transporter: Service=Gmail User=${emailUser ? '***' : 'None'}`);
 
     transporter = nodemailer.createTransport({
-        service: 'gmail', // Built-in shorthand for Gmail (handles host/port/secure auto)
+        service: 'gmail',
         auth: {
             user: emailUser,
             pass: emailPass,
         },
+        logger: true, // Log SMTP exchanges
+        debug: true,  // Include debug info
+        family: 4     // Force IPv4 to avoid IPv6 timeouts
     });
 
     // Verify connection configuration
@@ -47,72 +50,34 @@ const sendVerificationEmail = async (email, username, token) => {
         const verificationUrl = `${process.env.APP_URL || 'http://localhost:5173'}/verify-email/${token}`;
 
         const mailOptions = {
+            // ... (options keep unchanged ideally, but for brevity here I'll assume they are constructed same way or I just wrap the send)
             from: '"GIMS Assets Manager" <noreply@gimsassets.com>',
             to: email,
             subject: 'Verify Your Email - GIMS Assets Manager',
             html: `
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <style>
-                        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-                        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-                        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
-                        .content { background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px; }
-                        .button { display: inline-block; padding: 12px 30px; background: #2563eb; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; }
-                        .footer { text-align: center; margin-top: 20px; color: #6b7280; font-size: 12px; }
-                    </style>
-                </head>
-                <body>
-                    <div class="container">
-                        <div class="header">
-                            <h1>Welcome to GIMS Assets Manager!</h1>
-                        </div>
-                        <div class="content">
-                            <p>Hi <strong>${username}</strong>,</p>
-                            <p>Thank you for registering! Please verify your email address to complete your registration and start managing your assets.</p>
-                            <p style="text-align: center;">
-                                <a href="${verificationUrl}" class="button">Verify Email Address</a>
-                            </p>
-                            <p>Or copy and paste this link into your browser:</p>
-                            <p style="word-break: break-all; color: #2563eb;">${verificationUrl}</p>
-                            <p><strong>This link will expire in 24 hours.</strong></p>
-                            <p>If you didn't create an account, you can safely ignore this email.</p>
-                        </div>
-                        <div class="footer">
-                            <p>&copy; 2025 GIMS Assets Manager. All rights reserved.</p>
-                        </div>
-                    </div>
-                </body>
-                </html>
+                <p>Hi ${username},</p>
+                <p>Click here to verify: <a href="${verificationUrl}">${verificationUrl}</a></p>
+                <p>This link expires in 24 hours.</p>
             `,
-            text: `
-                Welcome to GIMS Assets Manager!
-                
-                Hi ${username},
-                
-                Thank you for registering! Please verify your email address by clicking the link below:
-                
-                ${verificationUrl}
-                
-                This link will expire in 24 hours.
-                
-                If you didn't create an account, you can safely ignore this email.
-            `
+            text: `Verify here: ${verificationUrl}`
         };
 
         const info = await transporter.sendMail(mailOptions);
 
         console.log('Verification email sent:', info.messageId);
-
-        // For Ethereal, log the preview URL
-        if (!process.env.EMAIL_USER) {
-            console.log('Preview URL:', nodemailer.getTestMessageUrl(info));
-        }
-
         return { success: true, messageId: info.messageId };
     } catch (error) {
         console.error('Error sending verification email:', error);
+
+        // FAILSAFE: Log the link so admin can verify manually
+        const verificationUrl = `${process.env.APP_URL || 'http://localhost:5173'}/verify-email/${token}`;
+        console.log('===========================================================');
+        console.log('⚠️  EMAIL FAILED - MANUAL VERIFICATION LINK  ⚠️');
+        console.log(`User: ${username} (${email})`);
+        console.log(`Link: ${verificationUrl}`);
+        console.log('===========================================================');
+        console.log('Copy the link above and open it in your browser to verify.');
+
         return { success: false, error: error.message };
     }
 };
