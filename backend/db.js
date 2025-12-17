@@ -13,6 +13,18 @@ pool.on('connect', () => {
   console.log('Connected to PostgreSQL database');
 });
 
+// Debug connection config
+try {
+  if (process.env.DATABASE_URL) {
+    const url = new URL(process.env.DATABASE_URL);
+    console.log('DB Host:', url.hostname);
+  } else {
+    console.log('DB URL is missing!');
+  }
+} catch (e) {
+  console.error('Invalid DB URL format:', e.message);
+}
+
 pool.on('error', (err) => {
   console.error('Unexpected error on idle client', err);
   process.exit(-1);
