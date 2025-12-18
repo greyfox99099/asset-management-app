@@ -138,12 +138,12 @@ const PublicAssetView = () => {
                                     {file.file_type && file.file_type.startsWith('image/') ? (
                                         <div className="relative group">
                                             <img
-                                                src={`${API_BASE_URL}${file.file_url}`}
+                                                src={`${API_BASE_URL}${file.file_path || file.file_url}`}
                                                 alt={file.file_name}
                                                 className="w-full h-48 object-cover"
                                             />
                                             <a
-                                                href={`${API_BASE_URL}${file.file_url}`}
+                                                href={`${API_BASE_URL}${file.file_path || file.file_url}`}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100 text-white font-medium"
@@ -156,7 +156,7 @@ const PublicAssetView = () => {
                                             <Package className="w-12 h-12 text-blue-500 mb-3" />
                                             <p className="text-sm font-medium text-gray-900 mb-2 truncate max-w-full px-4">{file.file_name}</p>
                                             <a
-                                                href={`${API_BASE_URL}${file.file_url}`}
+                                                href={`${API_BASE_URL}${file.file_path || file.file_url}`}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 className="text-sm text-blue-600 hover:text-blue-700 font-semibold"
