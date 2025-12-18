@@ -29,7 +29,8 @@ const upload = multer({
 const insertAttachments = async (assetId, files) => {
     if (!files || files.length === 0) return;
 
-    const query = `INSERT INTO asset_attachments (asset_id, file_url, file_name, file_type) VALUES ($1, $2, $3, $4)`;
+    // SCHEMA CORRECTED: file_path instead of file_url
+    const query = `INSERT INTO asset_attachments (asset_id, file_path, file_name, file_type) VALUES ($1, $2, $3, $4)`;
 
     for (const file of files) {
         const fileUrl = `/uploads/${file.filename}`;
@@ -371,7 +372,7 @@ router.delete('/attachments/:attachmentId', async (req, res) => {
         }
 
         const fileData = fileResult.rows[0];
-        const filePath = path.join(__dirname, '..', fileData.file_url);
+        const filePath = path.join(__dirname, '..', fileData.file_path);
 
         // Delete from DB
         await pool.query('DELETE FROM asset_attachments WHERE id = $1', [attachmentId]);
