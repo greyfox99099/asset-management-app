@@ -301,7 +301,7 @@ const AssetForm = ({ asset, onClose, onSubmit }) => {
                                             </div>
                                             <div className="flex items-center gap-2">
                                                 <a
-                                                    href={`${API_BASE_URL}${file.file_url}`}
+                                                    href={`${API_BASE_URL}${file.file_path || file.file_url}`}
                                                     target="_blank"
                                                     rel="noreferrer"
                                                     className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md"
